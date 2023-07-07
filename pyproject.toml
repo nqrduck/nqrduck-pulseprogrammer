@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nqrduck-pulseprogrammer"
+version = "0.0.1"
+authors = [
+  { name="Julia Pfitzer", email="git@jupfi.me" },
+]
+
+description = "A module for the NQRduck program (a simple python script™) to do pulse programming."
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.8"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "matplotlib",
+    "pyqt5",
+    "NQRduck",
+]
+
+[project.entry-points."nqrduck"]
+"nqrduck-pulseprogrammer" = "nqrduck_pulseprogrammer.pulseprogrammer:PulseProgrammer"
