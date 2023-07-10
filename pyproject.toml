@@ -22,9 +22,9 @@ classifiers = [
 
 dependencies = [
     "matplotlib",
-    "pyqt5",
+    "pyqt6",
     "NQRduck",
 ]
 
 [project.entry-points."nqrduck"]
-"nqrduck-pulseprogrammer" = "nqrduck_pulseprogrammer.pulseprogrammer:PulseProgrammer"
+"nqrduck-pulseprogrammer" = "nqrduck_pulseprogrammer.pulseprogrammer:pulse_programmer"

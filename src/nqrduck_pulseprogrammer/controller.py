@@ -1,8 +1,10 @@
 import logging
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_controller import ModuleController
 
 logger = logging.getLogger(__name__)
 
 class PulseProgrammerController(ModuleController):
-    pass
+      
+    def on_loading(self, pulse_parameter_options):
+        logger.debug("Pulse programmer controller on loading")
+        self.module.model.pulse_parameter_options = pulse_parameter_options
