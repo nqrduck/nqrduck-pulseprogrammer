@@ -7,12 +7,16 @@ logger = logging.getLogger(__name__)
 
 class PulseProgrammerModel(ModuleModel):
     pulse_parameter_options_changed = pyqtSignal()
-    events_changed = pyqtSignal(list)
+    events_changed = pyqtSignal()
 
     def __init__(self, module):
         super().__init__(module)
         self.pulse_parameter_options = OrderedDict()
         self.events = []
+
+    def add_event(self, event_name):
+        self.events.append(event_name)
+        self.events_changed.emit()
 
     @property
     def events(self):
@@ -21,7 +25,7 @@ class PulseProgrammerModel(ModuleModel):
     @events.setter
     def events(self, value):
         self._events = value
-        self.events_changed.emit(value)
+        self.events_changed.emit()
 
     @property
     def pulse_parameter_options(self):
