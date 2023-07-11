@@ -2,6 +2,7 @@ import logging
 from collections import OrderedDict
 from PyQt6.QtCore import pyqtSignal
 from nqrduck.module.module_model import ModuleModel
+from nqrduck_spectrometer.pulse_sequence import PulseSequence
 
 logger = logging.getLogger(__name__)
 
@@ -12,23 +13,19 @@ class PulseProgrammerModel(ModuleModel):
     def __init__(self, module):
         super().__init__(module)
         self.pulse_parameter_options = OrderedDict()
-        self.events = OrderedDict()
+        self.pulse_sequence = PulseSequence("Untitled pulse sequence")
 
     def add_event(self, event_name):
-        self.events[event_name] = OrderedDict()
+        self.pulse_sequence.events[event_name] = PulseSequence.Event(event_name, 0)
+        logger.debug("Creating event %s with object id %s", event_name, id(self.pulse_sequence.events[event_name].parameters))
+
         # Create a default instance of the pulse parameter options and add it to the event
         for name, pulse_parameter_class in self.pulse_parameter_options.items():
-            self.events[event_name][name] = pulse_parameter_class("name")
+            logger.debug("Adding pulse parameter %s to event %s", name, event_name)
+            self.pulse_sequence.events[event_name].parameters[name] = pulse_parameter_class(name)
+            logger.debug("Created pulse parameter %s with object id %s", name, id(self.pulse_sequence.events[event_name].parameters[name]))
 
-        self.events_changed.emit()
-
-    @property
-    def events(self):
-        return self._events
-    
-    @events.setter
-    def events(self, value):
-        self._events = value
+        logger.debug(self.pulse_sequence.dump_sequence_data())
         self.events_changed.emit()
 
     @property

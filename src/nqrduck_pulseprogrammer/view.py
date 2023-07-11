@@ -21,7 +21,7 @@ class PulseProgrammerView(ModuleView):
         
     def setup_ui(self):
         # Create pulse table
-        title = QLabel("Pulse Sequence:")
+        title = QLabel("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
         # Make title bold
         font = title.font()
         font.setBold(True)
@@ -79,15 +79,15 @@ class PulseProgrammerView(ModuleView):
 
     @pyqtSlot()
     def on_events_changed(self):
-        logger.debug("Updating events to %s", self.module.model.events)
+        logger.debug("Updating events to %s", self.module.model.pulse_sequence.events)
 
-        for event in self.module.model.events:
+        for event in self.module.model.pulse_sequence.events:
             logger.debug("Adding event to pulseprogrammer view: %s", event)
-            # Create a label for the setting
+            # Create a label for the event
             event_name = QLabel(event)
             event_name.setMinimumWidth(70)
-            # Add an QLineEdit for the setting
-            line_edit = QLineEdit(str(0))
+            # Add an QLineEdit for the event
+            line_edit = QLineEdit(str(self.module.model.pulse_sequence.events[event].duration))
             line_edit.setMinimumWidth(30)
             # Add a label for the unit
             unit_label = QLabel("µs")
@@ -102,24 +102,26 @@ class PulseProgrammerView(ModuleView):
         
         self.layout().addLayout(event_layout)
 
-        self.pulse_table.setColumnCount(len(self.module.model.events))
-        self.pulse_table.setHorizontalHeaderLabels(self.module.model.events)
+        self.pulse_table.setColumnCount(len(self.module.model.pulse_sequence.events))
+        self.pulse_table.setHorizontalHeaderLabels(self.module.model.pulse_sequence.events)
 
         self.set_parameter_icons()
 
     def set_parameter_icons(self):
-        for i, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
-            for j, event in enumerate(self.module.model.events):
-                logger.debug("Adding button for event %s and parameter %s", event, parameter)
+        for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
+            for row_idx, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
+                logger.debug("Adding button for event %s and parameter %s with state %s", event, parameter, self.module.model.pulse_sequence.events[event].parameters[parameter].state)
+                logger.debug("Parameter object id: %s", id(self.module.model.pulse_sequence.events[event].parameters[parameter]))
                 button = QPushButton()
-                icon = QIcon(self.module.model.events[event][parameter].get_pixmap())
+                icon = QIcon(self.module.model.pulse_sequence.events[event].parameters[parameter].get_pixmap())
                 logger.debug("Icon size: %s", icon.availableSizes())
                 button.setIcon(icon)
                 button.setIconSize(icon.availableSizes()[0])
                 button.setFixedSize(icon.availableSizes()[0])
-                self.pulse_table.setCellWidget(i, j, button)
-                self.pulse_table.setRowHeight(i, icon.availableSizes()[0].height())
-                self.pulse_table.setColumnWidth(j, icon.availableSizes()[0].width())
+                
+                self.pulse_table.setCellWidget(row_idx, column_idx, button)
+                self.pulse_table.setRowHeight(row_idx, icon.availableSizes()[0].height())
+                self.pulse_table.setColumnWidth(column_idx, icon.availableSizes()[0].width())
 
                 # Connect the button to the on_button_clicked slot
                 func = functools.partial(self.on_button_clicked, event=event, parameter=parameter)
@@ -135,7 +137,7 @@ class PulseProgrammerView(ModuleView):
         if result:
             selection = dialog.return_func()
             logger.debug("Setting parameter %s of event %s to %s", parameter, event, selection)
-            self.module.model.events[event][parameter].set_options(selection)
+            self.module.model.pulse_sequence.events[event].parameters[parameter].set_options(selection)
             self.set_parameter_icons()
 
 class OptionsDialog(QDialog):
@@ -148,7 +150,7 @@ class OptionsDialog(QDialog):
 
         self.label = QLabel("Change options for the pulse parameter: %s" % parameter)
         self.layout.addWidget(self.label)
-        parameter = parent.module.model.events[event][parameter]
+        parameter = parent.module.model.pulse_sequence.events[event].parameters[parameter]
         
         options = parameter.get_options()
 
