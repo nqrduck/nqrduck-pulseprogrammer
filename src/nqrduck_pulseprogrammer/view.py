@@ -5,6 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QTableWidgetItem, QCheckBox
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.module.module_view import ModuleView
+from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ class PulseProgrammerView(ModuleView):
     def set_parameter_icons(self):
         for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
             for row_idx, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
-                logger.debug("Adding button for event %s and parameter %s with state %s", event, parameter, self.module.model.pulse_sequence.events[event].parameters[parameter].state)
+                logger.debug("Adding button for event %s and parameter %s", event, parameter)
                 logger.debug("Parameter object id: %s", id(self.module.model.pulse_sequence.events[event].parameters[parameter]))
                 button = QPushButton()
                 icon = QIcon(self.module.model.pulse_sequence.events[event].parameters[parameter].get_pixmap())
@@ -135,9 +136,10 @@ class PulseProgrammerView(ModuleView):
         result = dialog.exec()
 
         if result:
-            selection = dialog.return_func()
-            logger.debug("Setting parameter %s of event %s to %s", parameter, event, selection)
-            self.module.model.pulse_sequence.events[event].parameters[parameter].set_options(selection)
+            for option, function in dialog.return_functions.items():
+                logger.debug("Setting option %s of parameter %s in event %s to %s", option, parameter, event, function())
+                option.set_value(function())
+            
             self.set_parameter_icons()
 
 class OptionsDialog(QDialog):
@@ -155,26 +157,40 @@ class OptionsDialog(QDialog):
         options = parameter.get_options()
 
         # Based on these options we will now create our selection widget
+        self.return_functions = OrderedDict()
 
         # If the options are a list , we will create a QComboBox
-        if options[0] == list:
-            pass
-        # If the options are boolean, we will create a QCheckBox
-        elif options[0] == bool:
-            check_box = QCheckBox()
+        for key, option in options.items():
+            if option == list:
+                pass
+            # If the options are boolean, we will create a QCheckBox
+            elif isinstance(option, BooleanOption):
+                check_box = QCheckBox()
 
-            def checkbox_result():
-                return check_box.isChecked()
+                def checkbox_result():
+                    return check_box.isChecked()
 
-            check_box.setChecked(options[1])
-            self.layout.addWidget(check_box)
-            self.return_func = checkbox_result
-        # If the options are a float/int we will create a QSpinBox
-        elif options[0] == float or options[0] == int:
-            pass
-        # If the options are a string we will create a QLineEdit
-        elif options[0] == str:
-            pass
+                check_box.setChecked(option.state)
+                self.layout.addWidget(check_box)
+                self.return_functions[option] = checkbox_result
+
+            # If the options are a float/int we will create a QSpinBox
+            elif isinstance(option, NumericOption):
+                numeric_layout = QHBoxLayout()
+                numeric_label = QLabel(key)
+                numeric_lineedit = QLineEdit(str(option.value))
+                numeric_layout.addWidget(numeric_label)
+                numeric_layout.addWidget(numeric_lineedit)
+                numeric_layout.addStretch(1)
+                self.layout.addLayout(numeric_layout)
+                
+                self.return_functions[option] = numeric_lineedit.text
+
+            # If the options are a string we will create a QLineEdit
+            elif option == str:
+                pass
+        
+        logger.debug("Return functions are: %s" % self.return_functions.items())
 
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
@@ -184,9 +200,6 @@ class OptionsDialog(QDialog):
         self.buttons.rejected.connect(self.reject)
 
         self.layout.addWidget(self.buttons)
-        
-    def return_func(self):
-        return self.return_func
 
 class AddEventDialog(QDialog):
     def __init__(self, parent=None):
