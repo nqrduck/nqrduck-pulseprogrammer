@@ -12,10 +12,14 @@ class PulseProgrammerModel(ModuleModel):
     def __init__(self, module):
         super().__init__(module)
         self.pulse_parameter_options = OrderedDict()
-        self.events = []
+        self.events = OrderedDict()
 
     def add_event(self, event_name):
-        self.events.append(event_name)
+        self.events[event_name] = OrderedDict()
+        # Create a default instance of the pulse parameter options and add it to the event
+        for name, pulse_parameter_class in self.pulse_parameter_options.items():
+            self.events[event_name][name] = pulse_parameter_class("name")
+
         self.events_changed.emit()
 
     @property
