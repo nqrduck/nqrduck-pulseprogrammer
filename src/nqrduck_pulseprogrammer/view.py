@@ -216,7 +216,7 @@ class AddEventDialog(QDialog):
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
             self,
         )
-        self.buttons.accepted.connect(self.accept)
+        self.buttons.accepted.connect(self.check_input)
         self.buttons.rejected.connect(self.reject)
 
         self.layout.addWidget(self.label)
@@ -224,6 +224,14 @@ class AddEventDialog(QDialog):
         self.layout.addWidget(self.buttons)
 
     def get_name(self):
-        return self.name_input.text()        
+        return self.name_input.text()
 
+    def check_input(self):
+        # Make sure that name is not empty and that event name doesn't already exist. 
+        if self.name_input.text() == "":
+            self.label.setText("Please enter a name for the event.")
+        elif self.name_input.text() in self.parent().module.model.pulse_sequence.events:
+            self.label.setText("Event name already exists. Please enter a different name.")
+        else:
+            self.accept()
         
