@@ -93,7 +93,7 @@ class PulseProgrammerView(ModuleView):
             # Add a label for the unit
             unit_label = QLabel("µs")
             # Connect the editingFinished signal to the on_value_changed slot of the setting
-            # line_edit.editingFinished.connect(lambda: setting.on_value_changed(line_edit.text()))
+            line_edit.editingFinished.connect(lambda x=line_edit: self.module.model.pulse_sequence.events[event].on_duration_changed(x.text())) 
             # Add the label and the line edit to the layout
             event_layout = QHBoxLayout()
             event_layout.addWidget(event_name)
