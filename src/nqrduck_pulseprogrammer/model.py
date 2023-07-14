@@ -16,14 +16,14 @@ class PulseProgrammerModel(ModuleModel):
         self.pulse_sequence = PulseSequence("Untitled pulse sequence")
 
     def add_event(self, event_name):
-        self.pulse_sequence.events[event_name] = PulseSequence.Event(event_name, 0)
-        logger.debug("Creating event %s with object id %s", event_name, id(self.pulse_sequence.events[event_name].parameters))
+        self.pulse_sequence.events.append(PulseSequence.Event(event_name, 0))
+        logger.debug("Creating event %s with object id %s", event_name, id(self.pulse_sequence.events[-1]))
 
         # Create a default instance of the pulse parameter options and add it to the event
         for name, pulse_parameter_class in self.pulse_parameter_options.items():
             logger.debug("Adding pulse parameter %s to event %s", name, event_name)
-            self.pulse_sequence.events[event_name].parameters[name] = pulse_parameter_class(name)
-            logger.debug("Created pulse parameter %s with object id %s", name, id(self.pulse_sequence.events[event_name].parameters[name]))
+            self.pulse_sequence.events[-1].parameters[name] = pulse_parameter_class(name)
+            logger.debug("Created pulse parameter %s with object id %s", name, id(self.pulse_sequence.events[-1].parameters[name]))
 
         logger.debug(self.pulse_sequence.dump_sequence_data())
         self.events_changed.emit()
