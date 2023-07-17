@@ -65,7 +65,10 @@ class PulseProgrammerView(ModuleView):
         logger.debug("Updating pulse parameter options to %s", self.module.model.pulse_parameter_options.keys())
         # We set it to the length of the pulse parameter options + 1 because we want to add a row for the parameter option buttons
         self.pulse_table.setRowCount(len(self.module.model.pulse_parameter_options) + 1)
-        self.pulse_table.setVerticalHeaderLabels(self.module.model.pulse_parameter_options.keys())
+        # Move the vertical header labels on row down
+        pulse_options = [""]
+        pulse_options.extend(list(self.module.model.pulse_parameter_options.keys()))
+        self.pulse_table.setVerticalHeaderLabels(pulse_options)
 
     @pyqtSlot()
     def on_new_event_button_clicked(self):
@@ -127,23 +130,24 @@ class PulseProgrammerView(ModuleView):
                     func = functools.partial(self.module.controller.delete_event, event_name=event.name)
                     event_options_widget.delete_event.connect(func)
                     self.pulse_table.setCellWidget(row_idx, column_idx, event_options_widget)
-                else:
-                    logger.debug("Adding button for event %s and parameter %s", event, parameter)
-                    logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
-                    button = QPushButton()
-                    icon = QIcon(event.parameters[parameter].get_pixmap())
-                    logger.debug("Icon size: %s", icon.availableSizes())
-                    button.setIcon(icon)
-                    button.setIconSize(icon.availableSizes()[0])
-                    button.setFixedSize(icon.availableSizes()[0])
-                    
-                    self.pulse_table.setCellWidget(row_idx, column_idx, button)
-                    self.pulse_table.setRowHeight(row_idx, icon.availableSizes()[0].height())
-                    self.pulse_table.setColumnWidth(column_idx, icon.availableSizes()[0].width())
 
-                    # Connect the button to the on_button_clicked slot
-                    func = functools.partial(self.on_table_button_clicked, event=event, parameter=parameter)
-                    button.clicked.connect(func)
+                logger.debug("Adding button for event %s and parameter %s", event, parameter)
+                logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
+                button = QPushButton()
+                icon = QIcon(event.parameters[parameter].get_pixmap())
+                logger.debug("Icon size: %s", icon.availableSizes())
+                button.setIcon(icon)
+                button.setIconSize(icon.availableSizes()[0])
+                button.setFixedSize(icon.availableSizes()[0])
+                    
+                # We add 1 to the row index because the first row is used for the event options
+                self.pulse_table.setCellWidget(row_idx + 1, column_idx, button)
+                self.pulse_table.setRowHeight(row_idx + 1, icon.availableSizes()[0].height())
+                self.pulse_table.setColumnWidth(column_idx, icon.availableSizes()[0].width())
+
+                # Connect the button to the on_button_clicked slot
+                func = functools.partial(self.on_table_button_clicked, event=event, parameter=parameter)
+                button.clicked.connect(func)
 
     @pyqtSlot()
     def on_table_button_clicked(self, event, parameter):
