@@ -18,3 +18,21 @@ class PulseProgrammerController(ModuleController):
                 self.module.model.pulse_sequence.events.remove(event)
                 break
         self.module.model.events_changed.emit()
+
+    @pyqtSlot(str, str)
+    def change_event_name(self, old_name, new_name):
+        logger.debug("Changing event name from %s to %s", old_name, new_name)
+        for event in self.module.model.pulse_sequence.events:
+            if event.name == old_name:
+                event.name = new_name
+                break
+        self.module.model.events_changed.emit()
+
+    @pyqtSlot(str, float)
+    def change_event_duration(self, event_name, duration):
+        logger.debug("Changing duration of event %s to %s", event_name, duration)
+        for event in self.module.model.pulse_sequence.events:
+            if event.name == event_name:
+                event.duration = float(duration)
+                break
+        self.module.model.events_changed.emit()

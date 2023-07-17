@@ -83,6 +83,7 @@ class PulseProgrammerView(ModuleView):
 
     @pyqtSlot()
     def on_events_changed(self):
+        """This method is called whenever the events in the pulse sequence change. It updates the view to reflect the changes."""
         logger.debug("Updating events to %s", self.module.model.pulse_sequence.events)
 
         # Add label for the event lengths
@@ -91,24 +92,10 @@ class PulseProgrammerView(ModuleView):
         event_layout.addWidget(event_parameters_label)
 
         for event in self.module.model.pulse_sequence.events:
-            logger.debug("Adding event to pulseprogrammer view: %s", event)
+            logger.debug("Adding event to pulseprogrammer view: %s", event.name)
             # Create a label for the event
-            event_name = QLabel(event.name)
-            event_name.setMinimumWidth(70)
-            # Add an QLineEdit for the event
-            line_edit = QLineEdit(str(event.duration))
-            line_edit.setMinimumWidth(30)
-            # Add a label for the unit
-            unit_label = QLabel("µs")
-            # Connect the editingFinished signal to the on_value_changed slot of the setting
-            line_edit.editingFinished.connect(lambda x=line_edit: event.on_duration_changed(float(x.text()) * 1e-6)) 
-            # Add the label and the line edit to the layout
-            inner_layout = QHBoxLayout()
-            inner_layout.addWidget(event_name)
-            inner_layout.addWidget(line_edit)
-            inner_layout.addWidget(unit_label)
-            inner_layout.addStretch(1)
-            event_layout.addLayout(inner_layout)
+            event_label = QLabel("%s : %s µs" % (event.name, str(event.duration * 1e6)))
+            event_layout.addWidget(event_label)
         
         # Delete the old widget and create a new one
         self.event_widget.deleteLater()
@@ -125,10 +112,15 @@ class PulseProgrammerView(ModuleView):
         for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
             for row_idx, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
                 if row_idx == 0:
-                    event_options_widget = EventOptionsWidget(event.name)
+                    event_options_widget = EventOptionsWidget(event)
                     # Connect the delete_event signal to the on_delete_event slot
                     func = functools.partial(self.module.controller.delete_event, event_name=event.name)
                     event_options_widget.delete_event.connect(func)
+                    # Connect the change_event_duration signal to the on_change_event_duration slot
+                    event_options_widget.change_event_duration.connect(self.module.controller.change_event_duration)
+                    # Connect the change_event_name signal to the on_change_event_name slot
+                    event_options_widget.change_event_name.connect(self.module.controller.change_event_name)
+
                     self.pulse_table.setCellWidget(row_idx, column_idx, event_options_widget)
 
                 logger.debug("Adding button for event %s and parameter %s", event, parameter)
@@ -166,15 +158,17 @@ class PulseProgrammerView(ModuleView):
 class EventOptionsWidget(QWidget):
     """ This class is a widget that can be used to set the options for a pulse parameter.
     This widget is then added to the the first row of the according event column in the pulse table.
-    It has a edit button that opens a dialog that allows the user to change the options for the event (name duration and position).
+    It has a edit button that opens a dialog that allows the user to change the options for the event (name and duration).
     Furthermore it has a delete button that deletes the event from the pulse sequence.
     """
 
     delete_event = pyqtSignal(str)
+    change_event_duration = pyqtSignal(str, float)
+    change_event_name = pyqtSignal(str, str)
 
-    def __init__(self, event_name):
+    def __init__(self, event):
         super().__init__()
-        self.event_name = event_name
+        self.event = event
 
         layout = QHBoxLayout()
         self.edit_button = QPushButton("Edit")
@@ -186,7 +180,45 @@ class EventOptionsWidget(QWidget):
         self.setLayout(layout)
 
     def edit_event(self):
-        pass
+        logger.debug("Edit button clicked for event %s", self.event.name)
+        
+        # Create a QDialog to edit the event
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Edit event")
+        layout = QVBoxLayout()
+        label = QLabel("Edit event %s" % self.event.name)
+        layout.addWidget(label)
+
+        # Create the inputs for event name, duration 
+        name_layout = QHBoxLayout()
+        name_label = QLabel("Name:")
+        name_lineedit = QLineEdit(self.event.name)
+        name_layout.addWidget(name_label)
+        name_layout.addWidget(name_lineedit)
+        name_layout.addStretch(1)
+        layout.addLayout(name_layout)
+        duration_layout = QHBoxLayout()
+        duration_label = QLabel("Duration:")
+        duration_lineedit = QLineEdit()
+        duration_lineedit.setText(str(self.event.duration * 1e6))
+        duration_layout.addWidget(duration_label)
+        duration_layout.addWidget(duration_lineedit)
+        duration_layout.addStretch(1)
+        layout.addLayout(duration_layout)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        result = dialog.exec()
+        if result:
+            logger.debug("Editing event %s", self.event.name)
+            if name_lineedit.text() != self.event.name:
+                self.change_event_name.emit(self.event.name, name_lineedit.text())
+            if duration_lineedit.text() != str(self.event.duration):
+                self.change_event_duration.emit(self.event.name, float(duration_lineedit.text()) * 1e-6)
+
 
     def create_delete_event_dialog(self):
         # Create an 'are you sure' dialog
@@ -194,7 +226,7 @@ class EventOptionsWidget(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("Delete event")
         layout = QVBoxLayout()
-        label = QLabel("Are you sure you want to delete event %s?" % self.event_name)
+        label = QLabel("Are you sure you want to delete event %s?" % self.event.name)
         layout.addWidget(label)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No)
         buttons.accepted.connect(dialog.accept)
@@ -203,7 +235,7 @@ class EventOptionsWidget(QWidget):
         dialog.setLayout(layout)
         result = dialog.exec()
         if result:
-            self.delete_event.emit(self.event_name)
+            self.delete_event.emit(self.event.name)
             
 
 class OptionsDialog(QDialog):
