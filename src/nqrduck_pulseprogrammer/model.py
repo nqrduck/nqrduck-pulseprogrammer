@@ -2,7 +2,7 @@ import logging
 from collections import OrderedDict
 from PyQt6.QtCore import pyqtSignal
 from nqrduck.module.module_model import ModuleModel
-from nqrduck_spectrometer.pulse_sequence import PulseSequence
+from nqrduck_spectrometer.pulsesequence import PulseSequence
 
 logger = logging.getLogger(__name__)
 
