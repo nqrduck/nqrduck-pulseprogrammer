@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from nqrduck.module.module_model import ModuleModel
 from nqrduck_spectrometer.pulsesequence import PulseSequence
 

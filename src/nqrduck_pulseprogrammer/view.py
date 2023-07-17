@@ -2,8 +2,8 @@ import logging
 import functools
 from collections import OrderedDict
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QTableWidgetItem, QCheckBox
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox
+from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
 
@@ -28,6 +28,7 @@ class PulseProgrammerView(ModuleView):
         font.setBold(True)
         title.setFont(font)
 
+        # Table setup
         self.pulse_table = QTableWidget(self)
         self.pulse_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
         self.pulse_table.setAlternatingRowColors(True)
@@ -50,21 +51,20 @@ class PulseProgrammerView(ModuleView):
         layout.addLayout(table_layout)
         layout.addStretch(1)
         
-        # Add label for the event lengths
-        self.event_layout = QVBoxLayout()
-        event_parameters_label = QLabel("Event lengths:")
-        event_parameters_label.setFont(font)
-        self.event_layout.addWidget(event_parameters_label)
-        # self.event_layout.addStretch(1)
-        
-        layout.addLayout(self.event_layout)
         self.setLayout(layout)
+
+        # Add layout for the event lengths
+        self.event_widget = QWidget()
+        self.layout().addWidget(self.event_widget)
+
+        self.on_events_changed()
         
 
     @pyqtSlot()
     def on_pulse_parameter_options_changed(self):
         logger.debug("Updating pulse parameter options to %s", self.module.model.pulse_parameter_options.keys())
-        self.pulse_table.setRowCount(len(self.module.model.pulse_parameter_options))
+        # We set it to the length of the pulse parameter options + 1 because we want to add a row for the parameter option buttons
+        self.pulse_table.setRowCount(len(self.module.model.pulse_parameter_options) + 1)
         self.pulse_table.setVerticalHeaderLabels(self.module.model.pulse_parameter_options.keys())
 
     @pyqtSlot()
@@ -82,6 +82,11 @@ class PulseProgrammerView(ModuleView):
     def on_events_changed(self):
         logger.debug("Updating events to %s", self.module.model.pulse_sequence.events)
 
+        # Add label for the event lengths
+        event_layout = QVBoxLayout()
+        event_parameters_label = QLabel("Event lengths:")
+        event_layout.addWidget(event_parameters_label)
+
         for event in self.module.model.pulse_sequence.events:
             logger.debug("Adding event to pulseprogrammer view: %s", event)
             # Create a label for the event
@@ -95,13 +100,18 @@ class PulseProgrammerView(ModuleView):
             # Connect the editingFinished signal to the on_value_changed slot of the setting
             line_edit.editingFinished.connect(lambda x=line_edit: event.on_duration_changed(float(x.text()) * 1e-6)) 
             # Add the label and the line edit to the layout
-            event_layout = QHBoxLayout()
-            event_layout.addWidget(event_name)
-            event_layout.addWidget(line_edit)
-            event_layout.addWidget(unit_label)
-            event_layout.addStretch(1)
+            inner_layout = QHBoxLayout()
+            inner_layout.addWidget(event_name)
+            inner_layout.addWidget(line_edit)
+            inner_layout.addWidget(unit_label)
+            inner_layout.addStretch(1)
+            event_layout.addLayout(inner_layout)
         
-        self.layout().addLayout(event_layout)
+        # Delete the old widget and create a new one
+        self.event_widget.deleteLater()
+        self.event_widget = QWidget()
+        self.event_widget.setLayout(event_layout)
+        self.layout().addWidget(self.event_widget)
 
         self.pulse_table.setColumnCount(len(self.module.model.pulse_sequence.events))
         self.pulse_table.setHorizontalHeaderLabels([event.name for event in self.module.model.pulse_sequence.events])
@@ -111,25 +121,32 @@ class PulseProgrammerView(ModuleView):
     def set_parameter_icons(self):
         for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
             for row_idx, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
-                logger.debug("Adding button for event %s and parameter %s", event, parameter)
-                logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
-                button = QPushButton()
-                icon = QIcon(event.parameters[parameter].get_pixmap())
-                logger.debug("Icon size: %s", icon.availableSizes())
-                button.setIcon(icon)
-                button.setIconSize(icon.availableSizes()[0])
-                button.setFixedSize(icon.availableSizes()[0])
-                
-                self.pulse_table.setCellWidget(row_idx, column_idx, button)
-                self.pulse_table.setRowHeight(row_idx, icon.availableSizes()[0].height())
-                self.pulse_table.setColumnWidth(column_idx, icon.availableSizes()[0].width())
+                if row_idx == 0:
+                    event_options_widget = EventOptionsWidget(event.name)
+                    # Connect the delete_event signal to the on_delete_event slot
+                    func = functools.partial(self.module.controller.delete_event, event_name=event.name)
+                    event_options_widget.delete_event.connect(func)
+                    self.pulse_table.setCellWidget(row_idx, column_idx, event_options_widget)
+                else:
+                    logger.debug("Adding button for event %s and parameter %s", event, parameter)
+                    logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
+                    button = QPushButton()
+                    icon = QIcon(event.parameters[parameter].get_pixmap())
+                    logger.debug("Icon size: %s", icon.availableSizes())
+                    button.setIcon(icon)
+                    button.setIconSize(icon.availableSizes()[0])
+                    button.setFixedSize(icon.availableSizes()[0])
+                    
+                    self.pulse_table.setCellWidget(row_idx, column_idx, button)
+                    self.pulse_table.setRowHeight(row_idx, icon.availableSizes()[0].height())
+                    self.pulse_table.setColumnWidth(column_idx, icon.availableSizes()[0].width())
 
-                # Connect the button to the on_button_clicked slot
-                func = functools.partial(self.on_button_clicked, event=event, parameter=parameter)
-                button.clicked.connect(func)
+                    # Connect the button to the on_button_clicked slot
+                    func = functools.partial(self.on_table_button_clicked, event=event, parameter=parameter)
+                    button.clicked.connect(func)
 
     @pyqtSlot()
-    def on_button_clicked(self, event, parameter):
+    def on_table_button_clicked(self, event, parameter):
         logger.debug("Button for event %s and parameter %s clicked", event, parameter)
         # Create a QDialog to set the options for the parameter.
         dialog = OptionsDialog(event, parameter, self)
@@ -142,7 +159,52 @@ class PulseProgrammerView(ModuleView):
             
             self.set_parameter_icons()
 
+class EventOptionsWidget(QWidget):
+    """ This class is a widget that can be used to set the options for a pulse parameter.
+    This widget is then added to the the first row of the according event column in the pulse table.
+    It has a edit button that opens a dialog that allows the user to change the options for the event (name duration and position).
+    Furthermore it has a delete button that deletes the event from the pulse sequence.
+    """
+
+    delete_event = pyqtSignal(str)
+
+    def __init__(self, event_name):
+        super().__init__()
+        self.event_name = event_name
+
+        layout = QHBoxLayout()
+        self.edit_button = QPushButton("Edit")
+        self.edit_button.clicked.connect(self.edit_event)
+        self.delete_button = QPushButton("Delete")
+        self.delete_button.clicked.connect(self.create_delete_event_dialog)
+        layout.addWidget(self.edit_button)
+        layout.addWidget(self.delete_button)
+        self.setLayout(layout)
+
+    def edit_event(self):
+        pass
+
+    def create_delete_event_dialog(self):
+        # Create an 'are you sure' dialog
+        logger.debug("Delete button clicked")
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Delete event")
+        layout = QVBoxLayout()
+        label = QLabel("Are you sure you want to delete event %s?" % self.event_name)
+        layout.addWidget(label)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        result = dialog.exec()
+        if result:
+            self.delete_event.emit(self.event_name)
+            
+
 class OptionsDialog(QDialog):
+    """ This dialog is created whenever the edit button for a pulse option is clicked. 
+    It allows the user to change the options for the pulse parameter and creates the dialog in accordance to what can be set."""
     def __init__(self, event, parameter, parent=None):
         super().__init__(parent)
 
@@ -202,6 +264,7 @@ class OptionsDialog(QDialog):
         self.layout.addWidget(self.buttons)
 
 class AddEventDialog(QDialog):
+    """This dialog is created whenever a new event is added to the pulse sequence. It allows the user to enter a name for the event."""
     def __init__(self, parent=None):
         super().__init__(parent)
 
