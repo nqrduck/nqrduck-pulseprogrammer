@@ -2,7 +2,7 @@ import logging
 import functools
 from collections import OrderedDict
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox
+from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
@@ -171,9 +171,9 @@ class EventOptionsWidget(QWidget):
         self.event = event
 
         layout = QHBoxLayout()
-        self.edit_button = QPushButton("Edit")
+        self.edit_button = QToolButton()
         self.edit_button.clicked.connect(self.edit_event)
-        self.delete_button = QPushButton("Delete")
+        self.delete_button = QToolButton()
         self.delete_button.clicked.connect(self.create_delete_event_dialog)
         layout.addWidget(self.edit_button)
         layout.addWidget(self.delete_button)
