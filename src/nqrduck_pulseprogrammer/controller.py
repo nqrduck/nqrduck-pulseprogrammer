@@ -1,6 +1,8 @@
 import logging
+import json
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.module.module_controller import ModuleController
+from nqrduck_spectrometer.pulsesequence import PulseSequence
 
 logger = logging.getLogger(__name__)
 
@@ -35,4 +37,24 @@ class PulseProgrammerController(ModuleController):
             if event.name == event_name:
                 event.duration = float(duration)
                 break
+        self.module.model.events_changed.emit()
+
+    def save_pulse_sequence(self, path):
+        logger.debug("Saving pulse sequence to %s", path)
+        sequence = self.module.model.pulse_sequence.dump_sequence_data()
+        with open(path, "w") as file:
+            file.write(json.dumps(sequence))
+        
+
+    def load_pulse_sequence(self, path):
+        logger.debug("Loading pulse sequence from %s", path)
+        sequence = None
+        with open(path, "r") as file:
+            sequence = file.read()
+
+        sequence = json.loads(sequence)
+
+        loaded_sequence = PulseSequence.load_sequence(sequence, self.module.model.pulse_parameter_options)
+        
+        self.module.model.pulse_sequence = loaded_sequence
         self.module.model.events_changed.emit()

@@ -2,7 +2,7 @@ import logging
 import functools
 from collections import OrderedDict
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton
+from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
@@ -21,6 +21,7 @@ class PulseProgrammerView(ModuleView):
         self.module.model.pulse_parameter_options_changed.connect(self.on_pulse_parameter_options_changed)
         
     def setup_ui(self):
+
         # Create pulse table
         title = QLabel("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
         # Make title bold
@@ -39,12 +40,23 @@ class PulseProgrammerView(ModuleView):
         table_layout.addStretch(1)
         # Add button for new event
         self.new_event_button = QPushButton("New event")
+        self.new_event_button.clicked.connect(self.on_new_event_button_clicked)
+        button_layout.addWidget(self.new_event_button)
+
+        # Add button for save pulse sequence
+        self.save_pulse_sequence_button = QPushButton("Save pulse sequence")
+        self.save_pulse_sequence_button.clicked.connect(self.on_save_button_clicked)
+        button_layout.addWidget(self.save_pulse_sequence_button)
+       
+        # Add button for load pulse sequence
+        self.load_pulse_sequence_button = QPushButton("Load pulse sequence")
+        self.load_pulse_sequence_button.clicked.connect(self.on_load_button_clicked)
+        button_layout.addWidget(self.load_pulse_sequence_button)
 
         # Connect signals
-        self.new_event_button.clicked.connect(self.on_new_event_button_clicked)
         self.module.model.events_changed.connect(self.on_events_changed)
 
-        button_layout.addWidget(self.new_event_button)
+        
         button_layout.addStretch(1)
         layout.addWidget(title)
         layout.addLayout(button_layout)
@@ -154,6 +166,22 @@ class PulseProgrammerView(ModuleView):
                 option.set_value(function())
             
             self.set_parameter_icons()
+
+    @pyqtSlot()
+    def on_save_button_clicked(self):
+        logger.debug("Save button clicked")
+        file_manager = QFileManager(self)
+        file_name = file_manager.saveFileDialog()
+        if file_name:
+            self.module.controller.save_pulse_sequence(file_name)
+
+    @pyqtSlot()
+    def on_load_button_clicked(self):
+        logger.debug("Load button clicked")
+        file_manager = QFileManager(self)
+        file_name = file_manager.loadFileDialog()
+        if file_name:
+            self.module.controller.load_pulse_sequence(file_name)
 
 class EventOptionsWidget(QWidget):
     """ This class is a widget that can be used to set the options for a pulse parameter.
@@ -268,7 +296,7 @@ class OptionsDialog(QDialog):
                 def checkbox_result():
                     return check_box.isChecked()
 
-                check_box.setChecked(option.state)
+                check_box.setChecked(option.value)
                 self.layout.addWidget(check_box)
                 self.return_functions[option] = checkbox_result
 
@@ -333,4 +361,34 @@ class AddEventDialog(QDialog):
             self.label.setText("Event name already exists. Please enter a different name.")
         else:
             self.accept()
+
+
+class QFileManager:
+    def __init__(self, parent=None):
+        self.parent = parent
+
+    def loadFileDialog(self):
+        fileName, _ = QFileDialog.getOpenFileName(self.parent,
+                                                  "QFileManager - Open File",
+                                                  "",
+                                                  "Quack Files (*.quack);;All Files (*)",
+                                                  options = QFileDialog.Option.ReadOnly)
+        if fileName:
+            return fileName
+        else:
+            return None
+
+    def saveFileDialog(self):
+        fileName, _ = QFileDialog.getSaveFileName(self.parent,
+                                                  "QFileManager - Save File",
+                                                  "",
+                                                  "Quack Files (*.quack);;All Files (*)",
+                                                  options=QFileDialog.Option.DontUseNativeDialog)
+        if fileName:
+            # Append the .quack extension if not present
+            if not fileName.endswith('.quack'):
+                fileName += '.quack'
+            return fileName
+        else:
+            return None
         
