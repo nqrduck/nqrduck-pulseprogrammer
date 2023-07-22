@@ -3,10 +3,10 @@ import functools
 from collections import OrderedDict
 from pathlib import Path
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
+from PyQt6.QtWidgets import QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
-from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
+from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption, FunctionOption
 
 logger = logging.getLogger(__name__)
 
@@ -330,6 +330,10 @@ class OptionsDialog(QDialog):
             # If the options are a string we will create a QLineEdit
             elif option == str:
                 pass
+
+            elif isinstance(option, FunctionOption):
+                function_option = FunctionOptionWidget(option, event)
+                self.layout.addWidget(function_option)
         
         logger.debug("Return functions are: %s" % self.return_functions.items())
 
@@ -341,6 +345,89 @@ class OptionsDialog(QDialog):
         self.buttons.rejected.connect(self.reject)
 
         self.layout.addWidget(self.buttons)
+
+class FunctionOptionWidget(QWidget):
+    """This class is a widget that can be used to set the options for a pulse parameter.
+    It plots the given function in time and frequency domain. 
+    One can also select the function from a list of functions represented as buttons."""
+
+    def __init__(self, function_option, event):
+        super().__init__()
+
+        self.function_option = function_option
+        self.event = event
+        layout = QVBoxLayout()
+        for function in function_option.functions:
+            button = QPushButton(function.name)
+            button.clicked.connect(functools.partial(self.on_button_clicked, function=function))
+            inner_layout = QHBoxLayout()
+            inner_layout.addWidget(button)
+            layout.addLayout(inner_layout)
+        
+        self.setLayout(layout)
+        self.load_active_function()
+
+    @pyqtSlot()
+    def on_button_clicked(self, function):
+        logger.debug("Button for function %s clicked", function.name)
+        self.function_option.set_value(function)
+        # Remove the plotter with object name "plotter" from the layout
+        for i in reversed(range(self.layout().count())):
+            item = self.layout().itemAt(i)
+            if item.widget() and item.widget().objectName() == "active_function":
+                item.widget().deleteLater()
+                break
+
+        self.load_active_function()
+
+    def load_active_function(self):
+        # New QWidget for the active function
+        active_function_Widget = QWidget()
+        active_function_Widget.setObjectName("active_function")
+        
+        function_layout = QVBoxLayout()
+
+        plot_layout = QHBoxLayout()
+        
+        # Add plot for time domain
+        time_domain_layout = QVBoxLayout()
+        time_domain_label = QLabel("Time domain:")
+        time_domain_layout.addWidget(time_domain_label)
+        plot = self.function_option.value.time_domain_plot(self.event.duration)
+        time_domain_layout.addWidget(plot)
+        plot_layout.addLayout(time_domain_layout)
+
+        # Add plot for frequency domain
+        frequency_domain_layout = QVBoxLayout()
+        frequency_domain_label = QLabel("Frequency domain:")
+        frequency_domain_layout.addWidget(frequency_domain_label)
+        plot = self.function_option.value.frequency_domain_plot(self.event.duration)
+        frequency_domain_layout.addWidget(plot)
+        plot_layout.addLayout(frequency_domain_layout)
+
+        function_layout.addLayout(plot_layout)
+
+        parameter_layout = QFormLayout()
+        parameter_label = QLabel("Parameters:")
+        parameter_layout.addRow(parameter_label)
+        for parameter in self.function_option.value.parameters:
+            parameter_label = QLabel(parameter.name)
+            parameter_lineedit = QLineEdit(str(parameter.value))
+
+            # Create a QHBoxLayout
+            hbox = QHBoxLayout()
+
+            # Add your QLineEdit and a stretch to the QHBoxLayout
+            hbox.addWidget(parameter_lineedit)
+            hbox.addStretch(1)
+
+            # Use addRow() method to add label and the QHBoxLayout next to each other
+            parameter_layout.addRow(parameter_label, hbox)
+
+        function_layout.addLayout(parameter_layout)
+        function_layout.addStretch(1)
+        active_function_Widget.setLayout(function_layout)
+        self.layout().addWidget(active_function_Widget)
 
 class AddEventDialog(QDialog):
     """This dialog is created whenever a new event is added to the pulse sequence. It allows the user to enter a name for the event."""
