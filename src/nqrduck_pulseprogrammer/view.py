@@ -1,8 +1,9 @@
 import logging
 import functools
 from collections import OrderedDict
+from pathlib import Path
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog
+from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption
@@ -134,6 +135,7 @@ class PulseProgrammerView(ModuleView):
                     event_options_widget.change_event_name.connect(self.module.controller.change_event_name)
 
                     self.pulse_table.setCellWidget(row_idx, column_idx, event_options_widget)
+                    self.pulse_table.setRowHeight(row_idx, event_options_widget.layout().sizeHint().height())
 
                 logger.debug("Adding button for event %s and parameter %s", event, parameter)
                 logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
@@ -198,14 +200,27 @@ class EventOptionsWidget(QWidget):
         super().__init__()
         self.event = event
 
+
+        self_path = Path(__file__).parent
         layout = QHBoxLayout()
         self.edit_button = QToolButton()
+        icon = QIcon(str(self_path / "resources/Pen_16x16.png"))
+        self.edit_button.setIcon(icon)
+        self.edit_button.setIconSize(icon.availableSizes()[0])
+        self.edit_button.setFixedSize(icon.availableSizes()[0])
         self.edit_button.clicked.connect(self.edit_event)
+        # Delete button
         self.delete_button = QToolButton()
+        icon = QIcon(str(self_path / "resources/Garbage_16x16.png"))
+        self.delete_button.setIcon(icon)
+        self.delete_button.setIconSize(icon.availableSizes()[0])
+        self.delete_button.setFixedSize(icon.availableSizes()[0])
         self.delete_button.clicked.connect(self.create_delete_event_dialog)
+
         layout.addWidget(self.edit_button)
         layout.addWidget(self.delete_button)
         self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def edit_event(self):
         logger.debug("Edit button clicked for event %s", self.event.name)
