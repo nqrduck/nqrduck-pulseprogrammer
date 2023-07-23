@@ -3,7 +3,7 @@ import functools
 from collections import OrderedDict
 from pathlib import Path
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
+from PyQt6.QtWidgets import QGroupBox, QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption, FunctionOption
@@ -357,28 +357,105 @@ class FunctionOptionWidget(QWidget):
         self.function_option = function_option
         self.event = event
         layout = QVBoxLayout()
+        inner_layout = QHBoxLayout()
         for function in function_option.functions:
             button = QPushButton(function.name)
-            button.clicked.connect(functools.partial(self.on_button_clicked, function=function))
-            inner_layout = QHBoxLayout()
+            button.clicked.connect(functools.partial(self.on_functionbutton_clicked, function=function))
             inner_layout.addWidget(button)
-            layout.addLayout(inner_layout)
         
+        layout.addLayout(inner_layout)
         self.setLayout(layout)
+
+        # Add Advanced settings button
+        self.advanced_settings_button = QPushButton("Show Advanced settings")
+        self.advanced_settings_button.clicked.connect(self.on_advanced_settings_button_clicked)
+        layout.addWidget(self.advanced_settings_button)
+
+        # Add advanced settings widget
+        self.advanced_settings = QGroupBox('Advanced Settings')
+        self.advanced_settings.setHidden(True)
+        self.advanced_settings_layout = QFormLayout()
+        self.advanced_settings.setLayout(self.advanced_settings_layout)
+        layout.addWidget(self.advanced_settings)
+
+        # Add the advanced settings
+        # Advanced settings are  resolution, start_x = -1, end_x and the expr of the function_option.value
+        resolution_layout = QHBoxLayout()
+        resolution_label = QLabel("Resolution:")
+        self.resolution_lineedit = QLineEdit(str(function_option.value.resolution))
+        resolution_layout.addWidget(resolution_label)
+        resolution_layout.addWidget(self.resolution_lineedit)
+        resolution_layout.addStretch(1)
+        self.advanced_settings_layout.addRow(resolution_label, resolution_layout)
+
+        start_x_layout = QHBoxLayout()
+        start_x_label = QLabel("Start x:")
+        self.start_x_lineedit = QLineEdit(str(function_option.value.start_x))
+        start_x_layout.addWidget(start_x_label)
+        start_x_layout.addWidget(self.start_x_lineedit)
+        start_x_layout.addStretch(1)
+        self.advanced_settings_layout.addRow(start_x_label, start_x_layout)
+
+        end_x_layout = QHBoxLayout()
+        end_x_label = QLabel("End x:")
+        self.end_x_lineedit = QLineEdit(str(function_option.value.end_x))
+        end_x_layout.addWidget(end_x_label)
+        end_x_layout.addWidget(self.end_x_lineedit)
+        end_x_layout.addStretch(1)
+        self.advanced_settings_layout.addRow(end_x_label, end_x_layout)
+
+        expr_layout = QHBoxLayout()
+        expr_label = QLabel("Expression:")
+        self.expr_lineedit = QLineEdit(str(function_option.value.expr))
+        expr_layout.addWidget(expr_label)
+        expr_layout.addWidget(self.expr_lineedit)
+        expr_layout.addStretch(1)
+        self.advanced_settings_layout.addRow(expr_label, expr_layout)
+
+        # Display the active function
         self.load_active_function()
 
+        # Add buttton for replotting of the active function with the new parameters
+        self.replot_button = QPushButton("Replot")
+        self.replot_button.clicked.connect(self.on_replot_button_clicked)
+        layout.addWidget(self.replot_button)
+
     @pyqtSlot()
-    def on_button_clicked(self, function):
+    def on_replot_button_clicked(self):
+        logger.debug("Replot button clicked")
+        # Update the resolution, start_x, end_x and expr lineedits
+        self.function_option.value.resolution = float(self.resolution_lineedit.text())
+        self.function_option.value.start_x = float(self.start_x_lineedit.text())
+        self.function_option.value.end_x = float(self.end_x_lineedit.text())
+        self.function_option.value.expr = self.expr_lineedit.text()
+        self.delete_active_function()
+        self.load_active_function()
+  
+
+    @pyqtSlot()
+    def on_advanced_settings_button_clicked(self):
+        if self.advanced_settings.isHidden():
+            self.advanced_settings.setHidden(False)
+            self.advanced_settings_button.setText('Hide Advanced Settings')
+        else:
+            self.advanced_settings.setHidden(True)
+            self.advanced_settings_button.setText('Show Advanced Settings')
+
+
+    @pyqtSlot()
+    def on_functionbutton_clicked(self, function):
         logger.debug("Button for function %s clicked", function.name)
         self.function_option.set_value(function)
+        self.delete_active_function()
+        self.load_active_function()
+
+    def delete_active_function(self):
         # Remove the plotter with object name "plotter" from the layout
         for i in reversed(range(self.layout().count())):
             item = self.layout().itemAt(i)
             if item.widget() and item.widget().objectName() == "active_function":
                 item.widget().deleteLater()
                 break
-
-        self.load_active_function()
 
     def load_active_function(self):
         # New QWidget for the active function
@@ -413,6 +490,8 @@ class FunctionOptionWidget(QWidget):
         for parameter in self.function_option.value.parameters:
             parameter_label = QLabel(parameter.name)
             parameter_lineedit = QLineEdit(str(parameter.value))
+            # Add the parameter_lineedit editingFinished signal to the paramter.set_value slot
+            parameter_lineedit.editingFinished.connect(lambda: parameter.set_value(parameter_lineedit.text()))
 
             # Create a QHBoxLayout
             hbox = QHBoxLayout()
@@ -428,6 +507,13 @@ class FunctionOptionWidget(QWidget):
         function_layout.addStretch(1)
         active_function_Widget.setLayout(function_layout)
         self.layout().addWidget(active_function_Widget)
+
+        # Update the resolution, start_x, end_x and expr lineedits
+        self.resolution_lineedit.setText(str(self.function_option.value.resolution))
+        self.start_x_lineedit.setText(str(self.function_option.value.start_x))
+        self.end_x_lineedit.setText(str(self.function_option.value.end_x))
+        self.expr_lineedit.setText(str(self.function_option.value.expr))
+        
 
 class AddEventDialog(QDialog):
     """This dialog is created whenever a new event is added to the pulse sequence. It allows the user to enter a name for the event."""
