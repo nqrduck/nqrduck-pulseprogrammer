@@ -25,7 +25,7 @@ class PulseProgrammerModel(ModuleModel):
             self.pulse_sequence.events[-1].parameters[name] = pulse_parameter_class(name)
             logger.debug("Created pulse parameter %s with object id %s", name, id(self.pulse_sequence.events[-1].parameters[name]))
 
-        logger.debug(self.pulse_sequence.dump_sequence_data())
+        logger.debug(self.pulse_sequence.to_json())
         self.events_changed.emit()
 
     @property

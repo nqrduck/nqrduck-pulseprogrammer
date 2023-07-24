@@ -301,7 +301,7 @@ class OptionsDialog(QDialog):
         self.return_functions = OrderedDict()
 
         # If the options are a list , we will create a QComboBox
-        for key, option in options.items():
+        for option in options:
             if option == list:
                 pass
             # If the options are boolean, we will create a QCheckBox
@@ -318,7 +318,7 @@ class OptionsDialog(QDialog):
             # If the options are a float/int we will create a QSpinBox
             elif isinstance(option, NumericOption):
                 numeric_layout = QHBoxLayout()
-                numeric_label = QLabel(key)
+                numeric_label = QLabel(option.name)
                 numeric_lineedit = QLineEdit(str(option.value))
                 numeric_layout.addWidget(numeric_label)
                 numeric_layout.addWidget(numeric_lineedit)

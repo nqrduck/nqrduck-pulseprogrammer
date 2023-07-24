@@ -41,7 +41,7 @@ class PulseProgrammerController(ModuleController):
 
     def save_pulse_sequence(self, path):
         logger.debug("Saving pulse sequence to %s", path)
-        sequence = self.module.model.pulse_sequence.dump_sequence_data()
+        sequence = self.module.model.pulse_sequence.to_json()
         with open(path, "w") as file:
             file.write(json.dumps(sequence))
         
