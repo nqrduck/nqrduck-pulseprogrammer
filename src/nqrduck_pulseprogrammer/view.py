@@ -3,7 +3,7 @@ import functools
 from collections import OrderedDict
 from pathlib import Path
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QGroupBox, QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
+from PyQt6.QtWidgets import QMessageBox, QGroupBox, QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption, FunctionOption
@@ -286,6 +286,7 @@ class OptionsDialog(QDialog):
     It allows the user to change the options for the pulse parameter and creates the dialog in accordance to what can be set."""
     def __init__(self, event, parameter, parent=None):
         super().__init__(parent)
+        self.parent = parent
 
         self.setWindowTitle("Options")
 
@@ -332,7 +333,7 @@ class OptionsDialog(QDialog):
                 pass
 
             elif isinstance(option, FunctionOption):
-                function_option = FunctionOptionWidget(option, event)
+                function_option = FunctionOptionWidget(option, event, parent)
                 self.layout.addWidget(function_option)
         
         logger.debug("Return functions are: %s" % self.return_functions.items())
@@ -351,8 +352,9 @@ class FunctionOptionWidget(QWidget):
     It plots the given function in time and frequency domain. 
     One can also select the function from a list of functions represented as buttons."""
 
-    def __init__(self, function_option, event):
-        super().__init__()
+    def __init__(self, function_option, event, parent=None):
+        super().__init__(parent)
+        self.parent = parent
 
         self.function_option = function_option
         self.event = event
@@ -427,7 +429,15 @@ class FunctionOptionWidget(QWidget):
         self.function_option.value.resolution = float(self.resolution_lineedit.text())
         self.function_option.value.start_x = float(self.start_x_lineedit.text())
         self.function_option.value.end_x = float(self.end_x_lineedit.text())
-        self.function_option.value.expr = self.expr_lineedit.text()
+        try:
+            self.function_option.value.expr = self.expr_lineedit.text()
+        except SyntaxError:
+            logger.debug("Invalid expression: %s", self.expr_lineedit.text())
+            self.expr_lineedit.setText(str(self.function_option.value.expr))
+            # Create message box that tells the user that the expression is invalid
+            self.create_message_box("Invalid expression", "The expression you entered is invalid. Please enter a valid expression.")
+
+
         self.delete_active_function()
         self.load_active_function()
   
@@ -513,6 +523,19 @@ class FunctionOptionWidget(QWidget):
         self.start_x_lineedit.setText(str(self.function_option.value.start_x))
         self.end_x_lineedit.setText(str(self.function_option.value.end_x))
         self.expr_lineedit.setText(str(self.function_option.value.expr))
+
+    def create_message_box(self, message : str, information : str) -> None:
+        """Creates a message box with the given message and information and shows it.
+        
+        Args:
+            message (str): The message to be shown in the message box
+            information (str): The information to be shown in the message box"""
+        msg = QMessageBox(parent=self.parent)
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setText(message)
+        msg.setInformativeText(information)
+        msg.setWindowTitle("Warning")
+        msg.exec()
         
 
 class AddEventDialog(QDialog):
