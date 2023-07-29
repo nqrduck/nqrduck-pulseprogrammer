@@ -426,9 +426,9 @@ class FunctionOptionWidget(QWidget):
     def on_replot_button_clicked(self):
         logger.debug("Replot button clicked")
         # Update the resolution, start_x, end_x and expr lineedits
-        self.function_option.value.resolution = float(self.resolution_lineedit.text())
-        self.function_option.value.start_x = float(self.start_x_lineedit.text())
-        self.function_option.value.end_x = float(self.end_x_lineedit.text())
+        self.function_option.value.resolution = self.resolution_lineedit.text()
+        self.function_option.value.start_x = self.start_x_lineedit.text()
+        self.function_option.value.end_x = self.end_x_lineedit.text()
         try:
             self.function_option.value.expr = self.expr_lineedit.text()
         except SyntaxError:

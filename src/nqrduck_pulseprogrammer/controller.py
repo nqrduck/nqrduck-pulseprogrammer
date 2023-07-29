@@ -2,6 +2,7 @@ import logging
 import json
 import decimal
 from PyQt6.QtCore import pyqtSlot
+from nqrduck.helpers.serializer import DecimalEncoder
 from nqrduck.module.module_controller import ModuleController
 from nqrduck_spectrometer.pulsesequence import PulseSequence
 
@@ -50,7 +51,7 @@ class PulseProgrammerController(ModuleController):
         logger.debug("Saving pulse sequence to %s", path)
         sequence = self.module.model.pulse_sequence.to_json()
         with open(path, "w") as file:
-            file.write(json.dumps(sequence))
+            file.write(json.dumps(sequence, cls=DecimalEncoder))
         
 
     def load_pulse_sequence(self, path):
