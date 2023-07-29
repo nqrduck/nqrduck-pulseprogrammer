@@ -193,7 +193,7 @@ class EventOptionsWidget(QWidget):
     """
 
     delete_event = pyqtSignal(str)
-    change_event_duration = pyqtSignal(str, float)
+    change_event_duration = pyqtSignal(str, str)
     change_event_name = pyqtSignal(str, str)
 
     def __init__(self, event):
@@ -233,21 +233,20 @@ class EventOptionsWidget(QWidget):
         layout.addWidget(label)
 
         # Create the inputs for event name, duration 
-        name_layout = QHBoxLayout()
+        event_form_layout = QFormLayout()
         name_label = QLabel("Name:")
         name_lineedit = QLineEdit(self.event.name)
-        name_layout.addWidget(name_label)
-        name_layout.addWidget(name_lineedit)
-        name_layout.addStretch(1)
-        layout.addLayout(name_layout)
+        event_form_layout.addRow(name_label, name_lineedit)
         duration_layout = QHBoxLayout()
         duration_label = QLabel("Duration:")
         duration_lineedit = QLineEdit()
+        unit_label = QLabel("µs")
         duration_lineedit.setText(str(self.event.duration * 1e6))
         duration_layout.addWidget(duration_label)
         duration_layout.addWidget(duration_lineedit)
-        duration_layout.addStretch(1)
-        layout.addLayout(duration_layout)
+        duration_layout.addWidget(unit_label)
+        event_form_layout.addRow(duration_layout)
+        layout.addLayout(event_form_layout)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(dialog.accept)
@@ -260,7 +259,7 @@ class EventOptionsWidget(QWidget):
             if name_lineedit.text() != self.event.name:
                 self.change_event_name.emit(self.event.name, name_lineedit.text())
             if duration_lineedit.text() != str(self.event.duration):
-                self.change_event_duration.emit(self.event.name, float(duration_lineedit.text()) * 1e-6)
+                self.change_event_duration.emit(self.event.name, duration_lineedit.text())
 
 
     def create_delete_event_dialog(self):

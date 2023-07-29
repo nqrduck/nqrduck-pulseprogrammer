@@ -30,12 +30,17 @@ class PulseProgrammerController(ModuleController):
                 break
         self.module.model.events_changed.emit()
 
-    @pyqtSlot(str, float)
+    @pyqtSlot(str, str)
     def change_event_duration(self, event_name, duration):
         logger.debug("Changing duration of event %s to %s", event_name, duration)
         for event in self.module.model.pulse_sequence.events:
             if event.name == event_name:
-                event.duration = float(duration)
+                try:
+                    event.duration = duration
+                except ValueError:
+                    logger.error("Duration must be a positive number")
+                    # Emit signal to the nqrduck core to show an error message
+                    self.module.nqrduck_signal.emit("notification", ["Error", "Duration must be a positive number"])
                 break
         self.module.model.events_changed.emit()
 
