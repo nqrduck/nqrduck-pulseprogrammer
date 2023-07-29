@@ -2,6 +2,7 @@ import logging
 import functools
 from collections import OrderedDict
 from pathlib import Path
+from decimal import Decimal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox, QGroupBox, QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
@@ -107,7 +108,7 @@ class PulseProgrammerView(ModuleView):
         for event in self.module.model.pulse_sequence.events:
             logger.debug("Adding event to pulseprogrammer view: %s", event.name)
             # Create a label for the event
-            event_label = QLabel("%s : %s µs" % (event.name, str(event.duration * 1e6)))
+            event_label = QLabel("%s : %s µs" % (event.name, str(event.duration * Decimal(1e6))))
             event_layout.addWidget(event_label)
         
         # Delete the old widget and create a new one
@@ -241,7 +242,7 @@ class EventOptionsWidget(QWidget):
         duration_label = QLabel("Duration:")
         duration_lineedit = QLineEdit()
         unit_label = QLabel("µs")
-        duration_lineedit.setText(str(self.event.duration * 1e6))
+        duration_lineedit.setText(str(self.event.duration * Decimal(1e6)))
         duration_layout.addWidget(duration_label)
         duration_layout.addWidget(duration_lineedit)
         duration_layout.addWidget(unit_label)

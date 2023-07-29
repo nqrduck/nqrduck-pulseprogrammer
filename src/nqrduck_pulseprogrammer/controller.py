@@ -1,5 +1,6 @@
 import logging
 import json
+import decimal
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.module.module_controller import ModuleController
 from nqrduck_spectrometer.pulsesequence import PulseSequence
@@ -36,8 +37,9 @@ class PulseProgrammerController(ModuleController):
         for event in self.module.model.pulse_sequence.events:
             if event.name == event_name:
                 try:
-                    event.duration = duration
-                except ValueError:
+                    # The u is for microseconds
+                    event.duration = duration + "u"
+                except decimal.InvalidOperation:
                     logger.error("Duration must be a positive number")
                     # Emit signal to the nqrduck core to show an error message
                     self.module.nqrduck_signal.emit("notification", ["Error", "Duration must be a positive number"])
