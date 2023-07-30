@@ -134,6 +134,10 @@ class PulseProgrammerView(ModuleView):
                     event_options_widget.change_event_duration.connect(self.module.controller.change_event_duration)
                     # Connect the change_event_name signal to the on_change_event_name slot
                     event_options_widget.change_event_name.connect(self.module.controller.change_event_name)
+                    # Connect the move_event_left signal to the on_move_event_left slot
+                    event_options_widget.move_event_left.connect(self.module.controller.on_move_event_left)
+                    # Connect the move_event_right signal to the on_move_event_right slot
+                    event_options_widget.move_event_right.connect(self.module.controller.on_move_event_right)
 
                     self.pulse_table.setCellWidget(row_idx, column_idx, event_options_widget)
                     self.pulse_table.setRowHeight(row_idx, event_options_widget.layout().sizeHint().height())
@@ -196,6 +200,8 @@ class EventOptionsWidget(QWidget):
     delete_event = pyqtSignal(str)
     change_event_duration = pyqtSignal(str, str)
     change_event_name = pyqtSignal(str, str)
+    move_event_left = pyqtSignal(str)
+    move_event_right = pyqtSignal(str)
 
     def __init__(self, event):
         super().__init__()
@@ -203,13 +209,16 @@ class EventOptionsWidget(QWidget):
 
 
         self_path = Path(__file__).parent
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
+        upper_layout = QHBoxLayout()
+        # Edit button
         self.edit_button = QToolButton()
         icon = QIcon(str(self_path / "resources/Pen_16x16.png"))
         self.edit_button.setIcon(icon)
         self.edit_button.setIconSize(icon.availableSizes()[0])
         self.edit_button.setFixedSize(icon.availableSizes()[0])
         self.edit_button.clicked.connect(self.edit_event)
+        
         # Delete button
         self.delete_button = QToolButton()
         icon = QIcon(str(self_path / "resources/Garbage_16x16.png"))
@@ -218,12 +227,39 @@ class EventOptionsWidget(QWidget):
         self.delete_button.setFixedSize(icon.availableSizes()[0])
         self.delete_button.clicked.connect(self.create_delete_event_dialog)
 
-        layout.addWidget(self.edit_button)
-        layout.addWidget(self.delete_button)
+        upper_layout.addWidget(self.edit_button)
+        upper_layout.addWidget(self.delete_button)
+        
+        lower_layout = QHBoxLayout()
+        # Move left button
+        self.move_left_button = QToolButton()
+        icon = QIcon(str(self_path / "resources/ArrowLeft_16x16.png"))
+        self.move_left_button.setIcon(icon)
+        self.move_left_button.setIconSize(icon.availableSizes()[0])
+        self.move_left_button.setFixedSize(icon.availableSizes()[0])
+        self.move_left_button.clicked.connect(self.move_event_left_button_clicked)
+
+        # Move right button
+        self.move_right_button = QToolButton()
+        icon = QIcon(str(self_path / "resources/ArrowRight_16x16.png"))
+        self.move_right_button.setIcon(icon)
+        self.move_right_button.setIconSize(icon.availableSizes()[0])
+        self.move_right_button.setFixedSize(icon.availableSizes()[0])
+        self.move_right_button.clicked.connect(self.move_event_right_button_clicked)
+
+        lower_layout.addWidget(self.move_left_button)
+        lower_layout.addWidget(self.move_right_button)
+
+        layout.addLayout(upper_layout)
+        layout.addLayout(lower_layout)
+        
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+    @pyqtSlot()
     def edit_event(self):
+        """This method is called when the edit button is clicked. It opens a dialog that allows the user to change the event name and duration.
+        If the user clicks ok, the change_event_name and change_event_duration signals are emitted."""
         logger.debug("Edit button clicked for event %s", self.event.name)
         
         # Create a QDialog to edit the event
@@ -263,7 +299,11 @@ class EventOptionsWidget(QWidget):
                 self.change_event_duration.emit(self.event.name, duration_lineedit.text())
 
 
+    @pyqtSlot()
     def create_delete_event_dialog(self):
+        """This method is called when the delete button is clicked. It creates a dialog that asks the user if he is sure he wants to delete the event.
+        If the user clicks yes, the delete_event signal is emitted.
+        """
         # Create an 'are you sure' dialog
         logger.debug("Delete button clicked")
         dialog = QDialog(self)
@@ -279,6 +319,17 @@ class EventOptionsWidget(QWidget):
         result = dialog.exec()
         if result:
             self.delete_event.emit(self.event.name)
+
+    @pyqtSlot()
+    def move_event_left_button_clicked(self):
+        """This method is called when the move left button is clicked."""
+        logger.debug("Move event left: %s", self.event.name)
+        self.move_event_left.emit(self.event.name)
+
+    def move_event_right_button_clicked(self):
+        """This """
+        logger.debug("Move event right: %s", self.event.name)
+        self.move_event_right.emit(self.event.name)
             
 
 class OptionsDialog(QDialog):
