@@ -7,6 +7,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox, QGroupBox, QFormLayout, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QDialog, QLineEdit, QDialogButtonBox, QWidget, QCheckBox, QToolButton, QFileDialog, QSizePolicy
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
+from nqrduck.assets.icons import Logos
 from nqrduck_spectrometer.pulseparameters import BooleanOption, NumericOption, FunctionOption
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,7 @@ class PulseProgrammerView(ModuleView):
         # Add button for new event
         self.new_event_button = QPushButton("New event")
         # Add the New Icon to the button
-        self_path = Path(__file__).parent
-        icon = QIcon(str(self_path / "resources/New_16x16.png"))
+        icon = Logos.New16x16()
         self.new_event_button.setIconSize(icon.availableSizes()[0])
         self.new_event_button.setIcon(icon)
         self.new_event_button.clicked.connect(self.on_new_event_button_clicked)
@@ -54,8 +54,7 @@ class PulseProgrammerView(ModuleView):
         self.save_pulse_sequence_button = QPushButton("Save pulse sequence")
         self.save_pulse_sequence_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         # Add the Save Icon to the button
-        self_path = Path(__file__).parent
-        icon = QIcon(str(self_path / "resources/Save_16x16.png"))
+        icon = Logos.Save16x16()
         self.save_pulse_sequence_button.setIconSize(icon.availableSizes()[0])
         self.save_pulse_sequence_button.setIcon(icon)
         self.save_pulse_sequence_button.clicked.connect(self.on_save_button_clicked)
@@ -64,7 +63,7 @@ class PulseProgrammerView(ModuleView):
         # Add button for load pulse sequence
         self.load_pulse_sequence_button = QPushButton("Load pulse sequence")
         # Add the Load Icon to the button
-        icon = QIcon(str(self_path / "resources/Load_16x16.png"))
+        icon = Logos.Load16x16()
         self.load_pulse_sequence_button.setIconSize(icon.availableSizes()[0])
         self.load_pulse_sequence_button.setIcon(icon)
         self.load_pulse_sequence_button.clicked.connect(self.on_load_button_clicked)
@@ -160,7 +159,7 @@ class PulseProgrammerView(ModuleView):
                 logger.debug("Adding button for event %s and parameter %s", event, parameter)
                 logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
                 button = QPushButton()
-                icon = QIcon(event.parameters[parameter].get_pixmap())
+                icon = event.parameters[parameter].get_pixmap()
                 logger.debug("Icon size: %s", icon.availableSizes())
                 button.setIcon(icon)
                 button.setIconSize(icon.availableSizes()[0])
@@ -222,13 +221,11 @@ class EventOptionsWidget(QWidget):
         super().__init__()
         self.event = event
 
-
-        self_path = Path(__file__).parent
         layout = QVBoxLayout()
         upper_layout = QHBoxLayout()
         # Edit button
         self.edit_button = QToolButton()
-        icon = QIcon(str(self_path / "resources/Pen_12x12.png"))
+        icon = Logos.Pen12x12()
         self.edit_button.setIcon(icon)
         self.edit_button.setIconSize(icon.availableSizes()[0])
         self.edit_button.setFixedSize(icon.availableSizes()[0])
@@ -236,7 +233,7 @@ class EventOptionsWidget(QWidget):
         
         # Delete button
         self.delete_button = QToolButton()
-        icon = QIcon(str(self_path / "resources/Garbage_12x12.png"))
+        icon = Logos.Garbage12x12()
         self.delete_button.setIcon(icon)
         self.delete_button.setIconSize(icon.availableSizes()[0])
         self.delete_button.setFixedSize(icon.availableSizes()[0])
@@ -248,7 +245,7 @@ class EventOptionsWidget(QWidget):
         lower_layout = QHBoxLayout()
         # Move left button
         self.move_left_button = QToolButton()
-        icon = QIcon(str(self_path / "resources/ArrowLeft_12x12.png"))
+        icon = Logos.ArrowLeft12x12()
         self.move_left_button.setIcon(icon)
         self.move_left_button.setIconSize(icon.availableSizes()[0])
         self.move_left_button.setFixedSize(icon.availableSizes()[0])
@@ -256,7 +253,7 @@ class EventOptionsWidget(QWidget):
 
         # Move right button
         self.move_right_button = QToolButton()
-        icon = QIcon(str(self_path / "resources/ArrowRight_12x12.png"))
+        icon = Logos.ArrowRight12x12()
         self.move_right_button.setIcon(icon)
         self.move_right_button.setIconSize(icon.availableSizes()[0])
         self.move_right_button.setFixedSize(icon.availableSizes()[0])
