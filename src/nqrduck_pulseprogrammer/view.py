@@ -23,8 +23,9 @@ class PulseProgrammerView(ModuleView):
         logger.debug("Connecting pulse parameter options changed signal to on_pulse_parameter_options_changed")
         self.module.model.pulse_parameter_options_changed.connect(self.on_pulse_parameter_options_changed)
         
-    def setup_ui(self):
-
+    def setup_ui(self) -> None:
+        """Setup the table for the pulse sequence. Also add buttons for saving and loading pulse sequences and editing and creation of events
+        """
         # Create pulse table
         title = QLabel("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
         # Make title bold
@@ -89,7 +90,9 @@ class PulseProgrammerView(ModuleView):
         
 
     @pyqtSlot()
-    def on_pulse_parameter_options_changed(self):
+    def on_pulse_parameter_options_changed(self) -> None:
+        """This method is called whenever the pulse parameter options change. It updates the view to reflect the changes.
+        """
         logger.debug("Updating pulse parameter options to %s", self.module.model.pulse_parameter_options.keys())
         # We set it to the length of the pulse parameter options + 1 because we want to add a row for the parameter option buttons
         self.pulse_table.setRowCount(len(self.module.model.pulse_parameter_options) + 1)
@@ -99,7 +102,9 @@ class PulseProgrammerView(ModuleView):
         self.pulse_table.setVerticalHeaderLabels(pulse_options)
 
     @pyqtSlot()
-    def on_new_event_button_clicked(self):
+    def on_new_event_button_clicked(self) -> None:
+        """This method is called whenever the new event button is clicked. It creates a new event and adds it to the pulse sequence.
+        """
         # Create a QDialog for the new event
         logger.debug("New event button clicked")
         dialog = AddEventDialog(self)
@@ -110,8 +115,9 @@ class PulseProgrammerView(ModuleView):
             self.module.model.add_event(event_name)
 
     @pyqtSlot()
-    def on_events_changed(self):
-        """This method is called whenever the events in the pulse sequence change. It updates the view to reflect the changes."""
+    def on_events_changed(self) -> None:
+        """This method is called whenever the events in the pulse sequence change. It updates the view to reflect the changes.
+        """
         logger.debug("Updating events to %s", self.module.model.pulse_sequence.events)
 
         # Add label for the event lengths
@@ -136,7 +142,9 @@ class PulseProgrammerView(ModuleView):
 
         self.set_parameter_icons()
 
-    def set_parameter_icons(self):
+    def set_parameter_icons(self) -> None:
+        """This method sets the icons for the pulse parameter options.
+        """
         for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
             for row_idx, parameter in enumerate(self.module.model.pulse_parameter_options.keys()):
                 if row_idx == 0:
@@ -175,7 +183,8 @@ class PulseProgrammerView(ModuleView):
                 button.clicked.connect(func)
 
     @pyqtSlot()
-    def on_table_button_clicked(self, event, parameter):
+    def on_table_button_clicked(self, event , parameter) -> None:
+        """This method is called whenever a button in the pulse table is clicked. It opens a dialog to set the options for the parameter."""
         logger.debug("Button for event %s and parameter %s clicked", event, parameter)
         # Create a QDialog to set the options for the parameter.
         dialog = OptionsDialog(event, parameter, self)
@@ -189,7 +198,8 @@ class PulseProgrammerView(ModuleView):
             self.set_parameter_icons()
 
     @pyqtSlot()
-    def on_save_button_clicked(self):
+    def on_save_button_clicked(self) -> None:
+        """This method is called whenever the save button is clicked. It opens a dialog to select a file to save the pulse sequence to."""
         logger.debug("Save button clicked")
         file_manager = QFileManager(self)
         file_name = file_manager.saveFileDialog()
@@ -197,7 +207,8 @@ class PulseProgrammerView(ModuleView):
             self.module.controller.save_pulse_sequence(file_name)
 
     @pyqtSlot()
-    def on_load_button_clicked(self):
+    def on_load_button_clicked(self) -> None:
+        """This method is called whenever the load button is clicked. It opens a dialog to select a file to load the pulse sequence from."""
         logger.debug("Load button clicked")
         file_manager = QFileManager(self)
         file_name = file_manager.loadFileDialog()
@@ -269,7 +280,7 @@ class EventOptionsWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     @pyqtSlot()
-    def edit_event(self):
+    def edit_event(self) -> None:
         """This method is called when the edit button is clicked. It opens a dialog that allows the user to change the event name and duration.
         If the user clicks ok, the change_event_name and change_event_duration signals are emitted."""
         logger.debug("Edit button clicked for event %s", self.event.name)
@@ -312,7 +323,7 @@ class EventOptionsWidget(QWidget):
 
 
     @pyqtSlot()
-    def create_delete_event_dialog(self):
+    def create_delete_event_dialog(self) -> None:
         """This method is called when the delete button is clicked. It creates a dialog that asks the user if he is sure he wants to delete the event.
         If the user clicks yes, the delete_event signal is emitted.
         """
@@ -333,13 +344,13 @@ class EventOptionsWidget(QWidget):
             self.delete_event.emit(self.event.name)
 
     @pyqtSlot()
-    def move_event_left_button_clicked(self):
+    def move_event_left_button_clicked(self) -> None:
         """This method is called when the move left button is clicked."""
         logger.debug("Move event left: %s", self.event.name)
         self.move_event_left.emit(self.event.name)
 
-    def move_event_right_button_clicked(self):
-        """This """
+    def move_event_right_button_clicked(self) -> None:
+        """This method is called when the move right button is clicked."""
         logger.debug("Move event right: %s", self.event.name)
         self.move_event_right.emit(self.event.name)
             
@@ -486,7 +497,10 @@ class FunctionOptionWidget(QWidget):
         layout.addWidget(self.replot_button)
 
     @pyqtSlot()
-    def on_replot_button_clicked(self):
+    def on_replot_button_clicked(self) -> None:
+        """This function is called when the replot button is clicked. 
+        It will update the parameters of the function and replots the function.
+        """
         logger.debug("Replot button clicked")
         # Update the resolution, start_x, end_x and expr lineedits
         self.function_option.value.resolution = self.resolution_lineedit.text()
@@ -506,7 +520,10 @@ class FunctionOptionWidget(QWidget):
   
 
     @pyqtSlot()
-    def on_advanced_settings_button_clicked(self):
+    def on_advanced_settings_button_clicked(self) -> None:
+        """This function is called when the advanced settings button is clicked.
+        It will show or hide the advanced settings.
+        """
         if self.advanced_settings.isHidden():
             self.advanced_settings.setHidden(False)
             self.advanced_settings_button.setText('Hide Advanced Settings')
@@ -516,13 +533,19 @@ class FunctionOptionWidget(QWidget):
 
 
     @pyqtSlot()
-    def on_functionbutton_clicked(self, function):
+    def on_functionbutton_clicked(self, function) -> None:
+        """This function is called when a function button is clicked.
+        It will update the function_option.value to the function that was clicked.
+        """
         logger.debug("Button for function %s clicked", function.name)
         self.function_option.set_value(function)
         self.delete_active_function()
         self.load_active_function()
 
-    def delete_active_function(self):
+    def delete_active_function(self) -> None:
+        """This function is called when the active function is deleted.
+        It will remove the active function from the layout.
+        """
         # Remove the plotter with object name "plotter" from the layout
         for i in reversed(range(self.layout().count())):
             item = self.layout().itemAt(i)
@@ -530,7 +553,10 @@ class FunctionOptionWidget(QWidget):
                 item.widget().deleteLater()
                 break
 
-    def load_active_function(self):
+    def load_active_function(self) -> None:
+        """This function is called when the active function is loaded.
+        It will add the active function to the layout.
+        """
         # New QWidget for the active function
         active_function_Widget = QWidget()
         active_function_Widget.setObjectName("active_function")
@@ -624,10 +650,16 @@ class AddEventDialog(QDialog):
         self.layout.addWidget(self.name_input)
         self.layout.addWidget(self.buttons)
 
-    def get_name(self):
+    def get_name(self) -> str:
+        """Returns the name entered by the user.
+        
+        Returns:
+            str: The name entered by the user"""
         return self.name_input.text()
 
-    def check_input(self):
+    def check_input(self) -> None:
+        """Checks if the name entered by the user is valid. If it is, the dialog is accepted. If not, the user is informed of the error.
+        """
         # Make sure that name is not empty and that event name doesn't already exist. 
         if self.name_input.text() == "":
             self.label.setText("Please enter a name for the event.")
@@ -638,10 +670,16 @@ class AddEventDialog(QDialog):
 
 
 class QFileManager:
+    """This class provides methods for opening and saving files."""
     def __init__(self, parent=None):
         self.parent = parent
 
-    def loadFileDialog(self):
+    def loadFileDialog(self) -> str:
+        """Opens a file dialog for the user to select a file to open.
+        
+        Returns:
+            str: The path of the file selected by the user.
+        """
         fileName, _ = QFileDialog.getOpenFileName(self.parent,
                                                   "QFileManager - Open File",
                                                   "",
@@ -652,7 +690,12 @@ class QFileManager:
         else:
             return None
 
-    def saveFileDialog(self):
+    def saveFileDialog(self) -> str:
+        """Opens a file dialog for the user to select a file to save.
+        
+        Returns:
+            str: The path of the file selected by the user.
+        """
         fileName, _ = QFileDialog.getSaveFileName(self.parent,
                                                   "QFileManager - Save File",
                                                   "",
