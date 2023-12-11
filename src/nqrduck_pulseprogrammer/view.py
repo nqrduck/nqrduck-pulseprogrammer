@@ -18,12 +18,19 @@ class PulseProgrammerView(ModuleView):
     def __init__(self, module):
         super().__init__(module)
 
-        self.setup_ui()
+        self.setup_pulsetable()
+
+        self.setup_variabletables()
 
         logger.debug("Connecting pulse parameter options changed signal to on_pulse_parameter_options_changed")
         self.module.model.pulse_parameter_options_changed.connect(self.on_pulse_parameter_options_changed)
+
+    def setup_variabletables(self) -> None:
+        """Setup the table for the variables.
+        """
+        pass
         
-    def setup_ui(self) -> None:
+    def setup_pulsetable(self) -> None:
         """Setup the table for the pulse sequence. Also add buttons for saving and loading pulse sequences and editing and creation of events
         """
         # Create pulse table
