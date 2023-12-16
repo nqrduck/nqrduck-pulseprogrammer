@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class PulseProgrammerModel(ModuleModel):
     pulse_parameter_options_changed = pyqtSignal()
     events_changed = pyqtSignal()
+    pulse_sequence_changed = pyqtSignal()
 
     def __init__(self, module):
         super().__init__(module)
@@ -37,3 +38,12 @@ class PulseProgrammerModel(ModuleModel):
         self._pulse_parameter_options = value
         logger.debug("Pulse parameter options changed - emitting signal")
         self.pulse_parameter_options_changed.emit()
+
+    @property
+    def pulse_sequence(self):
+        return self._pulse_sequence
+    
+    @pulse_sequence.setter
+    def pulse_sequence(self, value):
+        self._pulse_sequence = value
+        self.pulse_sequence_changed.emit()

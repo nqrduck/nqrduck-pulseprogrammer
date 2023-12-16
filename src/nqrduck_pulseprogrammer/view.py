@@ -25,6 +25,8 @@ class PulseProgrammerView(ModuleView):
         logger.debug("Connecting pulse parameter options changed signal to on_pulse_parameter_options_changed")
         self.module.model.pulse_parameter_options_changed.connect(self.on_pulse_parameter_options_changed)
 
+
+
     def setup_variabletables(self) -> None:
         """Setup the table for the variables.
         """
@@ -34,11 +36,11 @@ class PulseProgrammerView(ModuleView):
         """Setup the table for the pulse sequence. Also add buttons for saving and loading pulse sequences and editing and creation of events
         """
         # Create pulse table
-        title = QLabel("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
+        self.title = QLabel("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
         # Make title bold
-        font = title.font()
+        font = self.title.font()
         font.setBold(True)
-        title.setFont(font)
+        self.title.setFont(font)
 
         # Table setup
         self.pulse_table = QTableWidget(self)
@@ -79,10 +81,11 @@ class PulseProgrammerView(ModuleView):
 
         # Connect signals
         self.module.model.events_changed.connect(self.on_events_changed)
+        self.module.model.pulse_sequence_changed.connect(self.on_pulse_sequence_changed)
 
         
         button_layout.addStretch(1)
-        layout.addWidget(title)
+        layout.addWidget(self.title)
         layout.addLayout(button_layout)
         layout.addLayout(table_layout)
         layout.addStretch(1)
@@ -95,6 +98,13 @@ class PulseProgrammerView(ModuleView):
 
         self.on_events_changed()
         
+
+    @pyqtSlot()
+    def on_pulse_sequence_changed(self) -> None:
+        """This method is called whenever the pulse sequence changes. It updates the view to reflect the changes.
+        """
+        logger.debug("Updating pulse sequence to %s", self.module.model.pulse_sequence.name)
+        self.title.setText("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
 
     @pyqtSlot()
     def on_pulse_parameter_options_changed(self) -> None:
@@ -675,7 +685,7 @@ class AddEventDialog(QDialog):
         else:
             self.accept()
 
-
+# This class should be refactored in the module view so it can be used by all modules
 class QFileManager:
     """This class provides methods for opening and saving files."""
     def __init__(self, parent=None):

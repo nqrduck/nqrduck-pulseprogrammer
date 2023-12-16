@@ -104,6 +104,12 @@ class PulseProgrammerController(ModuleController):
             path (str): The path to the file.
         """
         logger.debug("Saving pulse sequence to %s", path)
+        # Get the name of the file without the extension and without the path
+        file_name = path.split("/")[-1].split(".")[0]
+        self.module.model.pulse_sequence.name = file_name
+        logger.debug("Pulse sequence name: %s", self.module.model.pulse_sequence.name)
+        self.module.model.pulse_sequence_changed.emit()
+
         sequence = self.module.model.pulse_sequence.to_json()
         with open(path, "w") as file:
             file.write(json.dumps(sequence, cls=DecimalEncoder))
