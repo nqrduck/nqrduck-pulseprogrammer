@@ -383,8 +383,14 @@ class OptionsDialog(QDialog):
 
         self.layout = QVBoxLayout(self)
 
+        numeric_layout = QFormLayout()
+        numeric_layout.setHorizontalSpacing(30)
+
         self.label = QLabel("Change options for the pulse parameter: %s" % parameter)
         self.layout.addWidget(self.label)
+
+        self.layout.addLayout(numeric_layout)
+
         parameter = event.parameters[parameter]
         
         options = parameter.get_options()
@@ -409,13 +415,10 @@ class OptionsDialog(QDialog):
 
             # If the options are a float/int we will create a QSpinBox
             elif isinstance(option, NumericOption):
-                numeric_layout = QHBoxLayout()
                 numeric_label = QLabel(option.name)
                 numeric_lineedit = QLineEdit(str(option.value))
-                numeric_layout.addWidget(numeric_label)
-                numeric_layout.addWidget(numeric_lineedit)
-                numeric_layout.addStretch(1)
-                self.layout.addLayout(numeric_layout)
+                numeric_lineedit.setMaximumWidth(300)
+                numeric_layout.addRow(numeric_label, numeric_lineedit)
                 
                 self.return_functions[option] = numeric_lineedit.text
 
