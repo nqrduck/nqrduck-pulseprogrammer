@@ -375,6 +375,7 @@ class EventOptionsWidget(QWidget):
 class OptionsDialog(QDialog):
     """ This dialog is created whenever the edit button for a pulse option is clicked. 
     It allows the user to change the options for the pulse parameter and creates the dialog in accordance to what can be set."""
+
     def __init__(self, event, parameter, parent=None):
         super().__init__(parent)
         self.parent = parent
@@ -391,7 +392,9 @@ class OptionsDialog(QDialog):
 
         self.layout.addLayout(numeric_layout)
 
-        parameter = event.parameters[parameter]
+        # If the parameter is a string, we first need to get the parameter object from the according event
+        if isinstance(parameter, str):
+            parameter = event.parameters[parameter]
         
         options = parameter.get_options()
 
@@ -508,13 +511,13 @@ class FunctionOptionWidget(QWidget):
         expr_layout.addStretch(1)
         self.advanced_settings_layout.addRow(expr_label, expr_layout)
 
-        # Display the active function
-        self.load_active_function()
-
         # Add buttton for replotting of the active function with the new parameters
         self.replot_button = QPushButton("Replot")
         self.replot_button.clicked.connect(self.on_replot_button_clicked)
         layout.addWidget(self.replot_button)
+
+        # Display the active function
+        self.load_active_function()
 
     @pyqtSlot()
     def on_replot_button_clicked(self) -> None:
