@@ -48,9 +48,6 @@ When clicking on the 'Pulse Parameter Options' of a certain column and row, a di
 - b.) A numerical input field for the 'TX Phase' of the 'TX' Pulse Parameter Option.
 - c.) A function selection option for the 'TX Function' of the 'TX' Pulse Parameter Option. This adjust the pulse shape of the 'TX' event (Rect, Sinc, Gaussian, Custom).
 
-### Notes
-- The active user needs to be in the correct group to use serial ports for the ATM-system. For example 'uucp' in Arch Linux and 'dialout' in Ubuntu.
-
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
