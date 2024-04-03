@@ -787,11 +787,24 @@ class AddEventDialog(QDialog):
             Decimal: The duration value provided by the user, or 20"""
         return Decimal(self.duration_lineedit.text() or 20)
 
+    def check_input(self) -> None:
+        """Checks if the name and duration entered by the user is valid. If it is, the dialog is accepted. If not, the user is informed of the error."""
+        if (
+            self.duration_lineedit.validator.validate(self.duration_lineedit.text(), 0)[
+                0
+            ]
+            == QValidator.State.Acceptable
+            and self.name_input.validator.validate(self.name_input.text(), 0)[0]
+            == QValidator.State.Acceptable
+        ):
+            self.accept()
+
     class NameInputValidator(QValidator):
         """A validator for the name input field.
 
         This is used to validate the input of the QLineEdit widget.
         """
+
         def validate(self, value, position):
             """Validates the input value.
 
