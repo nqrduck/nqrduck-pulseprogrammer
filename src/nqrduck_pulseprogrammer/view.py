@@ -383,7 +383,7 @@ class EventOptionsWidget(QWidget):
         duration_label = QLabel("Duration:")
         duration_lineedit = QLineEdit()
         unit_label = QLabel("µs")
-        duration_lineedit.setText(str(self.event.duration * Decimal(1e6)))
+        duration_lineedit.setText("%.16g" % (self.event.duration * Decimal(1e6)))
         duration_layout.addWidget(duration_label)
         duration_layout.addWidget(duration_lineedit)
         duration_layout.addWidget(unit_label)
