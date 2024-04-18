@@ -22,6 +22,11 @@ You can install this module and the dependencies by running the following comman
 pip install .
 ```
 
+Alternatively, you can install the module and the dependencies by running the following command in the terminal while the virtual environment is activated:
+```bash
+pip install nqrduck-pulseprogrammer
+```
+
 ## Usage
 The module is used with the [Spectrometer](https://github.com/nqrduck/nqrduck-spectrometer) module. However you need to use an actual submodule of the spectromter module like:
 
@@ -32,7 +37,7 @@ The pulse programmer provides an event based graphical user interface for progra
 
 The following picture depicts an exemplary Free Induction Decay (FID) pulse sequence.
 
-<img src="docs/img/pulseprogrammer_labeled.png" alt="drawing" width="800">
+<img src="https://raw.githubusercontent.com/nqrduck/nqrduck-pulseprogrammer/303884b034dadc6d88ee8160b4870af64b15a7b7/docs/img/pulseprogrammer_labeled.png" alt="drawing" width="800">
 
 - a.) The different pulse sequence events. The events can be added to the pulse sequence by clicking on the '+ New Event' button.
 - b.) The different 'Pulse Parameter Options' provided by the spectrometer module. The active spectrometer in the picture is the LimeNQR spectrometer. It provides 'Pulse Parameter Options' for 'TX' (Transmit) and 'RX' (Receive) events.
@@ -42,7 +47,7 @@ The following picture depicts an exemplary Free Induction Decay (FID) pulse sequ
 
 When clicking on the 'Pulse Parameter Options' of a certain column and row, a dialog window opens. The dialog window provides the user with the possibility to adjust the 'Pulse Parameter Options' of the event. The dialog window is different for each 'Pulse Parameter Option'.
 
-<img src="docs/img/pulseprogrammer_tx_labeled.png" alt="drawing" width="800">
+<img src="https://raw.githubusercontent.com/nqrduck/nqrduck-pulseprogrammer/303884b034dadc6d88ee8160b4870af64b15a7b7/docs/img/pulseprogrammer_tx_labeled.png" alt="drawing" width="800">
 
 - a.) A numerical input field for the 'Relative TX Amplitude' of the 'TX' Pulse Parameter Option.
 - b.) A numerical input field for the 'TX Phase' of the 'TX' Pulse Parameter Option.

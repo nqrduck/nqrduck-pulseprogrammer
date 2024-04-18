@@ -12,6 +12,7 @@ class PulseProgrammerController(ModuleController):
       
     def on_loading(self, pulse_parameter_options : dict) -> None:
         """This method is called when the module is loaded. It sets the pulse parameter options in the model.
+
         Args:
             pulse_parameter_options (dict): The pulse parameter options.
         """
@@ -21,6 +22,7 @@ class PulseProgrammerController(ModuleController):
     @pyqtSlot(str)
     def delete_event(self, event_name : str) -> None:
         """This method deletes an event from the pulse sequence.
+
         Args:
             event_name (str): The name of the event to be deleted.
         """
@@ -34,6 +36,7 @@ class PulseProgrammerController(ModuleController):
     @pyqtSlot(str, str)
     def change_event_name(self, old_name : str, new_name : str) -> None:
         """This method changes the name of an event.
+
         Args:
             old_name (str): The old name of the event.
             new_name (str): The new name of the event.
@@ -84,7 +87,7 @@ class PulseProgrammerController(ModuleController):
 
     @pyqtSlot(str)
     def on_move_event_right(self, event_name : str) -> None:
-        """ This method moves the event one position to the right if possible.
+        """This method moves the event one position to the right if possible.
         
         Args:
             event_name (str): The name of the event to be moved.
@@ -123,7 +126,7 @@ class PulseProgrammerController(ModuleController):
         """
         logger.debug("Loading pulse sequence from %s", path)
         sequence = None
-        with open(path, "r") as file:
+        with open(path) as file:
             sequence = file.read()
 
         sequence = json.loads(sequence)

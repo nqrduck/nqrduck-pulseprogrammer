@@ -1,9 +1,8 @@
 import logging
 import functools
 from collections import OrderedDict
-from pathlib import Path
 from decimal import Decimal
-from PyQt6.QtGui import QIcon, QValidator
+from PyQt6.QtGui import QValidator
 from PyQt6.QtWidgets import (
     QMessageBox,
     QGroupBox,
@@ -519,7 +518,8 @@ class OptionsDialog(QDialog):
 class FunctionOptionWidget(QWidget):
     """This class is a widget that can be used to set the options for a pulse parameter.
     It plots the given function in time and frequency domain.
-    One can also select the function from a list of functions represented as buttons."""
+    One can also select the function from a list of functions represented as buttons.
+    """
 
     def __init__(self, function_option, event, parent=None):
         super().__init__(parent)
@@ -719,7 +719,8 @@ class FunctionOptionWidget(QWidget):
 
         Args:
             message (str): The message to be shown in the message box
-            information (str): The information to be shown in the message box"""
+        information (str): The information to be shown in the message box
+        """
         msg = QMessageBox(parent=self.parent)
         msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(message)
@@ -777,14 +778,16 @@ class AddEventDialog(QDialog):
         """Returns the name entered by the user.
 
         Returns:
-            str: The name entered by the user"""
+        str: The name entered by the user
+        """
         return self.name_input.text()
 
     def get_duration(self) -> Decimal:
         """Returns the duration entered by the user, or a fallback value."
 
         Returns:
-            Decimal: The duration value provided by the user, or 20"""
+        Decimal: The duration value provided by the user, or 20
+        """
         return Decimal(self.duration_lineedit.text() or 20)
 
     def check_input(self) -> None:
