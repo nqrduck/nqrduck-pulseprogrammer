@@ -1,7 +1,5 @@
 import logging
 import functools
-from collections import OrderedDict
-from decimal import Decimal
 from PyQt6.QtGui import QValidator
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -180,7 +178,7 @@ class PulseProgrammerView(ModuleView):
             logger.debug("Adding event to pulseprogrammer view: %s", event.name)
             # Create a label for the event
             event_label = QLabel(
-                "%s : %.16g µs" % (event.name, (event.duration * Decimal(1e6)))
+                "%s : %.16g µs" % (event.name, (event.duration * 1e6))
             )
             event_layout.addWidget(event_label)
 
@@ -433,7 +431,7 @@ class EventOptionsWidget(QWidget):
         duration_label = QLabel("Duration:")
         duration_lineedit = QLineEdit()
         unit_label = QLabel("µs")
-        duration_lineedit.setText("%.16g" % (self.event.duration * Decimal(1e6)))
+        duration_lineedit.setText("%.16g" % (self.event.duration * 1e6))
         duration_layout.addWidget(duration_label)
         duration_layout.addWidget(duration_lineedit)
         duration_layout.addWidget(unit_label)
@@ -545,13 +543,13 @@ class AddEventDialog(QDialog):
         """
         return self.name_input.text()
 
-    def get_duration(self) -> Decimal:
+    def get_duration(self) -> float:
         """Returns the duration entered by the user, or a fallback value."
 
         Returns:
-        Decimal: The duration value provided by the user, or 20
+        float: The duration value provided by the user, or 20
         """
-        return Decimal(self.duration_lineedit.text() or 20)
+        return self.duration_lineedit.text() or 20
 
     def check_input(self) -> None:
         """Checks if the name and duration entered by the user is valid. If it is, the dialog is accepted. If not, the user is informed of the error."""
