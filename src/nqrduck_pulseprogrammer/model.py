@@ -1,5 +1,4 @@
 import logging
-from decimal import Decimal
 from collections import OrderedDict
 from PyQt6.QtCore import pyqtSignal
 from nqrduck.module.module_model import ModuleModel
@@ -18,15 +17,15 @@ class PulseProgrammerModel(ModuleModel):
         self.pulse_parameter_options = OrderedDict()
         self.pulse_sequence = PulseSequence("Untitled pulse sequence")
 
-    def add_event(self, event_name: str, duration: Decimal = 20):
+    def add_event(self, event_name: str, duration: float = 20):
         """Add a new event to the current pulse sequence.
 
         Args:
             event_name (str): A human-readable name for the event
-            duration (Decimal): The duration of the event in µs. Defaults to 20.
+            duration (float): The duration of the event in µs. Defaults to 20.
         """
         self.pulse_sequence.events.append(
-            PulseSequence.Event(event_name, "%.16gu" % duration)
+            PulseSequence.Event(event_name, "%.16gu" % float(duration))
         )
         logger.debug(
             "Creating event %s with object id %s",
