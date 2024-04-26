@@ -266,7 +266,7 @@ class PulseProgrammerView(ModuleView):
         logger.debug("Button for event %s and parameter %s clicked", event, parameter)
         # Create a QDialog to set the options for the parameter.
         description = f"Set options for {parameter}"
-        dialog = DuckFormBuilder(description, description=description, parent=self)
+        dialog = DuckFormBuilder(parameter, description=description, parent=self)
 
         # Adding fields for the options
         form_options = []
