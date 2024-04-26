@@ -278,18 +278,40 @@ class PulseProgrammerView(ModuleView):
                 dialog.add_field(boolean_form)
                 form_options.append(option)
             elif isinstance(option, NumericOption):
+                # We only show the slider if both min and max values are set
+                if option.min_value is not None and option.max_value is not None:
+                    slider = True
+                else:
+                    slider = False
+
                 numeric_field = DuckFormFloatField(
-                    option.name, tooltip=None, default=option.value
+                    option.name,
+                    tooltip=None,
+                    default=option.value,
+                    min_value=option.min_value,
+                    max_value=option.max_value,
+                    slider=slider,
                 )
+
                 dialog.add_field(numeric_field)
                 form_options.append(option)
             elif isinstance(option, FunctionOption):
+                logger.debug(f"Functions: {option.functions}")
+
+                # When loading a pulse sequence, the instance of the objects will be different
+                # Therefore we need to operate on the classes
+                for function in option.functions:
+                    if function.__class__.__name__ == option.value.__class__.__name__:
+                        default_function = function
+
+                index = option.functions.index(default_function)
+
                 function_field = DuckFormFunctionSelectionField(
                     option.name,
                     tooltip=None,
                     functions=option.functions,
-                    duration = event.duration,
-                    default_function=option.functions.index(option.value),
+                    duration=event.duration,
+                    default_function=index,
                 )
                 dialog.add_field(function_field)
                 form_options.append(option)
