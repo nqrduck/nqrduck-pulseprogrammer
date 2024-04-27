@@ -1,3 +1,5 @@
+"""This module contains the view for the pulse programmer module. It is responsible for displaying the pulse sequence and the pulse parameter options."""
+
 import logging
 import functools
 from PyQt6.QtGui import QValidator
@@ -29,17 +31,21 @@ from nqrduck.helpers.formbuilder import (
     DuckFormBuilder,
     DuckFormFunctionSelectionField,
     DuckFormCheckboxField,
-    DuckFormDropdownField,
     DuckFormFloatField,
-    DuckFormIntField,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class PulseProgrammerView(ModuleView):
+    """View for the pulse programmer module."""
 
     def __init__(self, module):
+        """Initializes the pulse programmer view.
+
+        Args:
+            module (Module): The module to which this view belongs.
+        """
         super().__init__(module)
 
         self.setup_pulsetable()
@@ -58,11 +64,9 @@ class PulseProgrammerView(ModuleView):
         pass
 
     def setup_pulsetable(self) -> None:
-        """Setup the table for the pulse sequence. Also add buttons for saving and loading pulse sequences and editing and creation of events"""
+        """Setup the table for the pulse sequence. Also add buttons for saving and loading pulse sequences and editing and creation of events."""
         # Create pulse table
-        self.title = QLabel(
-            "Pulse Sequence: %s" % self.module.model.pulse_sequence.name
-        )
+        self.title = QLabel(f"Pulse Sequence: {self.module.model.pulse_sequence.name}")
         # Make title bold
         font = self.title.font()
         font.setBold(True)
@@ -133,7 +137,7 @@ class PulseProgrammerView(ModuleView):
         logger.debug(
             "Updating pulse sequence to %s", self.module.model.pulse_sequence.name
         )
-        self.title.setText("Pulse Sequence: %s" % self.module.model.pulse_sequence.name)
+        self.title.setText(f"Pulse Sequence: {self.module.model.pulse_sequence.name}")
 
     @pyqtSlot()
     def on_pulse_parameter_options_changed(self) -> None:
@@ -177,9 +181,7 @@ class PulseProgrammerView(ModuleView):
         for event in self.module.model.pulse_sequence.events:
             logger.debug("Adding event to pulseprogrammer view: %s", event.name)
             # Create a label for the event
-            event_label = QLabel(
-                "%s : %.16g µs" % (event.name, (event.duration * 1e6))
-            )
+            event_label = QLabel(f"{event.name} : {event.duration * 1e6:.16g} µs")
             event_layout.addWidget(event_label)
 
         # Delete the old widget and create a new one
@@ -260,7 +262,14 @@ class PulseProgrammerView(ModuleView):
 
     @pyqtSlot()
     def on_table_button_clicked(self, event, parameter) -> None:
-        """This method is called whenever a button in the pulse table is clicked. It opens a dialog to set the options for the parameter."""
+        """This method is called whenever a button in the pulse table is clicked.
+
+        It opens a dialog to set the options for the parameter.
+
+        Args:
+            event (PulseSequence.Event): The event for which the parameter options should be set.
+            parameter (str): The name of the parameter for which the options should be set.
+        """
         logger.debug("Button for event %s and parameter %s clicked", event, parameter)
         # Create a QDialog to set the options for the parameter.
         description = f"Set options for {parameter}"
@@ -346,9 +355,17 @@ class PulseProgrammerView(ModuleView):
 
 class EventOptionsWidget(QWidget):
     """This class is a widget that can be used to set the options for a pulse parameter.
+
     This widget is then added to the the first row of the according event column in the pulse table.
     It has a edit button that opens a dialog that allows the user to change the options for the event (name and duration).
     Furthermore it has a delete button that deletes the event from the pulse sequence.
+
+    Signals:
+        delete_event: Emitted when the delete button is clicked.
+        change_event_duration: Emitted when the duration of the event is changed.
+        change_event_name: Emitted when the name of the event is changed.
+        move_event_left: Emitted when the move left button is clicked.
+        move_event_right: Emitted when the move right button is clicked.
     """
 
     delete_event = pyqtSignal(str)
@@ -358,6 +375,7 @@ class EventOptionsWidget(QWidget):
     move_event_right = pyqtSignal(str)
 
     def __init__(self, event):
+        """Initializes the EventOptionsWidget."""
         super().__init__()
         self.event = event
 
@@ -411,6 +429,7 @@ class EventOptionsWidget(QWidget):
     @pyqtSlot()
     def edit_event(self) -> None:
         """This method is called when the edit button is clicked. It opens a dialog that allows the user to change the event name and duration.
+
         If the user clicks ok, the change_event_name and change_event_duration signals are emitted.
         """
         logger.debug("Edit button clicked for event %s", self.event.name)
@@ -419,7 +438,7 @@ class EventOptionsWidget(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("Edit event")
         layout = QVBoxLayout()
-        label = QLabel("Edit event %s" % self.event.name)
+        label = QLabel(f"Edit event {self.event.name}")
         layout.addWidget(label)
 
         # Create the inputs for event name, duration
@@ -457,7 +476,9 @@ class EventOptionsWidget(QWidget):
 
     @pyqtSlot()
     def create_delete_event_dialog(self) -> None:
-        """This method is called when the delete button is clicked. It creates a dialog that asks the user if he is sure he wants to delete the event.
+        """This method is called when the delete button is clicked.
+        
+        It creates a dialog that asks the user if he is sure he wants to delete the event.
         If the user clicks yes, the delete_event signal is emitted.
         """
         # Create an 'are you sure' dialog
@@ -465,7 +486,7 @@ class EventOptionsWidget(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("Delete event")
         layout = QVBoxLayout()
-        label = QLabel("Are you sure you want to delete event %s?" % self.event.name)
+        label = QLabel(f"Are you sure you want to delete event {self.event.name}?")
         layout.addWidget(label)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
@@ -494,6 +515,7 @@ class AddEventDialog(QDialog):
     """This dialog is created whenever a new event is added to the pulse sequence. It allows the user to enter a name for the event."""
 
     def __init__(self, parent=None):
+        """Initializes the AddEventDialog."""
         super().__init__(parent)
 
         self.setWindowTitle("Add Event")
@@ -544,10 +566,10 @@ class AddEventDialog(QDialog):
         return self.name_input.text()
 
     def get_duration(self) -> float:
-        """Returns the duration entered by the user, or a fallback value."
+        """Returns the duration entered by the user, or a fallback value.
 
         Returns:
-        float: The duration value provided by the user, or 20
+            float: The duration value provided by the user, or 20
         """
         return self.duration_lineedit.text() or 20
 
@@ -600,6 +622,7 @@ class QFileManager:
     """This class provides methods for opening and saving files."""
 
     def __init__(self, parent=None):
+        """Initializes the QFileManager."""
         self.parent = parent
 
     def loadFileDialog(self) -> str:
