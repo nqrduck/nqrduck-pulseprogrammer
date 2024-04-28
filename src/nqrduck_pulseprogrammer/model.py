@@ -1,4 +1,5 @@
 """Model for the pulse programmer module."""
+
 import logging
 from collections import OrderedDict
 from PyQt6.QtCore import pyqtSignal
@@ -10,21 +11,27 @@ logger = logging.getLogger(__name__)
 
 class PulseProgrammerModel(ModuleModel):
     """Model for the pulse programmer module.
-    
+
     This class is responsible for storing the data of the pulse programmer module.
-    
+
+    Attributes:
+        FILE_EXTENSION (str): The file extension for pulse programmer files.
+
     Signals:
         pulse_parameter_options_changed: Emitted when the pulse parameter options change.
         events_changed: Emitted when the events in the pulse sequence change.
         pulse_sequence_changed: Emitted when the pulse sequence changes.
     """
+
+    FILE_EXTENSION = "quack"
+
     pulse_parameter_options_changed = pyqtSignal()
     events_changed = pyqtSignal()
     pulse_sequence_changed = pyqtSignal()
 
     def __init__(self, module):
         """Initializes the pulse programmer model.
-        
+
         Args:
             module (Module): The module to which this model belongs.
         """

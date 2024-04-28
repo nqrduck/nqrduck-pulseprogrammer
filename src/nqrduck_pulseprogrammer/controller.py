@@ -1,4 +1,5 @@
 """Controller of  the pulse programmer module."""
+
 import logging
 import json
 import decimal
@@ -12,9 +13,10 @@ logger = logging.getLogger(__name__)
 
 class PulseProgrammerController(ModuleController):
     """Controller of the pulse programmer module.
-    
+
     This class is responsible for handling the logic of the pulse programmer module.
     """
+
     def on_loading(self, pulse_parameter_options: dict) -> None:
         """This method is called when the module is loaded. It sets the pulse parameter options in the model.
 

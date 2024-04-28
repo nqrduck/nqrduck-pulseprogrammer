@@ -338,7 +338,7 @@ class PulseProgrammerView(ModuleView):
     def on_save_button_clicked(self) -> None:
         """This method is called whenever the save button is clicked. It opens a dialog to select a file to save the pulse sequence to."""
         logger.debug("Save button clicked")
-        file_manager = QFileManager(self)
+        file_manager = self.QFileManager(self.module.model.FILE_EXTENSION, parent=self)
         file_name = file_manager.saveFileDialog()
         if file_name:
             self.module.controller.save_pulse_sequence(file_name)
@@ -347,10 +347,19 @@ class PulseProgrammerView(ModuleView):
     def on_load_button_clicked(self) -> None:
         """This method is called whenever the load button is clicked. It opens a dialog to select a file to load the pulse sequence from."""
         logger.debug("Load button clicked")
-        file_manager = QFileManager(self)
+        file_manager = self.QFileManager(self.module.model.FILE_EXTENSION, parent=self)
         file_name = file_manager.loadFileDialog()
         if file_name:
-            self.module.controller.load_pulse_sequence(file_name)
+            try:
+                self.module.controller.load_pulse_sequence(file_name)
+            except KeyError:
+                self.module.nqrduck_signal.emit(
+                    "notification",
+                    [
+                        "Error",
+                        "Error loading pulse sequence -  maybe the version of the pulse sequence is not compatible?",
+                    ],
+                )
 
 
 class EventOptionsWidget(QWidget):
@@ -477,7 +486,7 @@ class EventOptionsWidget(QWidget):
     @pyqtSlot()
     def create_delete_event_dialog(self) -> None:
         """This method is called when the delete button is clicked.
-        
+
         It creates a dialog that asks the user if he is sure he wants to delete the event.
         If the user clicks yes, the delete_event signal is emitted.
         """
@@ -615,51 +624,3 @@ class AddEventDialog(QDialog):
                 return (QValidator.State.Invalid, value, position)
 
             return (QValidator.State.Acceptable, value, position)
-
-
-# This class should be refactored in the module view so it can be used by all modules
-class QFileManager:
-    """This class provides methods for opening and saving files."""
-
-    def __init__(self, parent=None):
-        """Initializes the QFileManager."""
-        self.parent = parent
-
-    def loadFileDialog(self) -> str:
-        """Opens a file dialog for the user to select a file to open.
-
-        Returns:
-            str: The path of the file selected by the user.
-        """
-        fileName, _ = QFileDialog.getOpenFileName(
-            self.parent,
-            "QFileManager - Open File",
-            "",
-            "Quack Files (*.quack);;All Files (*)",
-            options=QFileDialog.Option.ReadOnly,
-        )
-        if fileName:
-            return fileName
-        else:
-            return None
-
-    def saveFileDialog(self) -> str:
-        """Opens a file dialog for the user to select a file to save.
-
-        Returns:
-            str: The path of the file selected by the user.
-        """
-        fileName, _ = QFileDialog.getSaveFileName(
-            self.parent,
-            "QFileManager - Save File",
-            "",
-            "Quack Files (*.quack);;All Files (*)",
-            options=QFileDialog.Option.DontUseNativeDialog,
-        )
-        if fileName:
-            # Append the .quack extension if not present
-            if not fileName.endswith(".quack"):
-                fileName += ".quack"
-            return fileName
-        else:
-            return None
