@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QWidget,
     QToolButton,
-    QFileDialog,
     QSizePolicy,
 )
 from PyQt6.QtCore import pyqtSlot, pyqtSignal
@@ -338,7 +337,7 @@ class PulseProgrammerView(ModuleView):
     def on_save_button_clicked(self) -> None:
         """This method is called whenever the save button is clicked. It opens a dialog to select a file to save the pulse sequence to."""
         logger.debug("Save button clicked")
-        file_manager = self.QFileManager(self.module.model.FILE_EXTENSION, parent=self)
+        file_manager = self.FileManager(self.module.model.FILE_EXTENSION, parent=self)
         file_name = file_manager.saveFileDialog()
         if file_name:
             self.module.controller.save_pulse_sequence(file_name)
@@ -347,7 +346,7 @@ class PulseProgrammerView(ModuleView):
     def on_load_button_clicked(self) -> None:
         """This method is called whenever the load button is clicked. It opens a dialog to select a file to load the pulse sequence from."""
         logger.debug("Load button clicked")
-        file_manager = self.QFileManager(self.module.model.FILE_EXTENSION, parent=self)
+        file_manager = self.FileManager(self.module.model.FILE_EXTENSION, parent=self)
         file_name = file_manager.loadFileDialog()
         if file_name:
             try:
