@@ -1,5 +1,8 @@
 # Changelog
 
+### Version 0.0.4 (05-05-2024)
+- Changed to FileManager class instead of QFileManager
+
 ### Version 0.0.3 (26-04-2024)
 - Switched to new formbuilder provided by the nqrduck core
 ### Version 0.0.2 (18-04-2024)
