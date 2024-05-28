@@ -46,9 +46,8 @@ class PulseProgrammerModel(ModuleModel):
             event_name (str): A human-readable name for the event
             duration (float): The duration of the event in µs. Defaults to 20.
         """
-        self.pulse_sequence.events.append(
-            PulseSequence.Event(event_name, f"{float(duration):.16g}u")
-        )
+        self.pulse_sequence.add_event(event_name, duration)
+        
         logger.debug(
             "Creating event %s with object id %s",
             event_name,

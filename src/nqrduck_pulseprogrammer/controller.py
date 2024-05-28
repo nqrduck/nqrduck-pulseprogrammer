@@ -34,10 +34,7 @@ class PulseProgrammerController(ModuleController):
             event_name (str): The name of the event to be deleted.
         """
         logger.debug("Deleting event %s", event_name)
-        for event in self.module.model.pulse_sequence.events:
-            if event.name == event_name:
-                self.module.model.pulse_sequence.events.remove(event)
-                break
+        self.module.model.pulse_sequence.delete_event(event_name)
         self.module.model.events_changed.emit()
 
     @pyqtSlot(str, str)
