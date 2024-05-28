@@ -290,6 +290,12 @@ class PulseProgrammerView(ModuleView):
                 else:
                     slider = False
 
+                if not slider:
+                    assert not option.slider, "Setting a slider is not possible without min and max values"
+
+                slider = option.slider
+
+
                 numeric_field = DuckFormFloatField(
                     option.name,
                     tooltip=None,
