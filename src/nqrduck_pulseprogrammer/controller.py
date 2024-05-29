@@ -6,7 +6,7 @@ import decimal
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.helpers.serializer import DecimalEncoder
 from nqrduck.module.module_controller import ModuleController
-from nqrduck_spectrometer.pulsesequence import PulseSequence
+from quackseq.pulsesequence import PulseSequence
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +17,9 @@ class PulseProgrammerController(ModuleController):
     This class is responsible for handling the logic of the pulse programmer module.
     """
 
-    def on_loading(self, pulse_parameter_options: dict) -> None:
-        """This method is called when the module is loaded. It sets the pulse parameter options in the model.
-
-        Args:
-            pulse_parameter_options (dict): The pulse parameter options.
-        """
+    def on_loading(self) -> None:
+        """This method is called when the module is loaded. It sets the pulse parameter options in the model."""
         logger.debug("Pulse programmer controller on loading")
-        self.module.model.pulse_parameter_options = pulse_parameter_options
 
     @pyqtSlot(str)
     def delete_event(self, event_name: str) -> None:

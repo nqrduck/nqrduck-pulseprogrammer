@@ -21,7 +21,8 @@ from PyQt6.QtCore import pyqtSlot, pyqtSignal
 from nqrduck.module.module_view import ModuleView
 from nqrduck.assets.icons import Logos
 from nqrduck.helpers.duckwidgets import DuckFloatEdit, DuckEdit
-from nqrduck_spectrometer.pulseparameters import (
+
+from quackseq.pulseparameters import (
     BooleanOption,
     NumericOption,
     FunctionOption,
@@ -32,6 +33,8 @@ from nqrduck.helpers.formbuilder import (
     DuckFormCheckboxField,
     DuckFormFloatField,
 )
+
+from .visual_parameter import VisualParameter
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +53,6 @@ class PulseProgrammerView(ModuleView):
         self.setup_pulsetable()
 
         self.setup_variabletables()
-
-        logger.debug(
-            "Connecting pulse parameter options changed signal to on_pulse_parameter_options_changed"
-        )
-        self.module.model.pulse_parameter_options_changed.connect(
-            self.on_pulse_parameter_options_changed
-        )
 
     def setup_variabletables(self) -> None:
         """Setup the table for the variables."""
@@ -139,20 +135,6 @@ class PulseProgrammerView(ModuleView):
         self.title.setText(f"Pulse Sequence: {self.module.model.pulse_sequence.name}")
 
     @pyqtSlot()
-    def on_pulse_parameter_options_changed(self) -> None:
-        """This method is called whenever the pulse parameter options change. It updates the view to reflect the changes."""
-        logger.debug(
-            "Updating pulse parameter options to %s",
-            self.module.model.pulse_parameter_options.keys(),
-        )
-        # We set it to the length of the pulse parameter options + 1 because we want to add a row for the parameter option buttons
-        self.pulse_table.setRowCount(len(self.module.model.pulse_parameter_options) + 1)
-        # Move the vertical header labels on row down
-        pulse_options = [""]
-        pulse_options.extend(list(self.module.model.pulse_parameter_options.keys()))
-        self.pulse_table.setVerticalHeaderLabels(pulse_options)
-
-    @pyqtSlot()
     def on_new_event_button_clicked(self) -> None:
         """This method is called whenever the new event button is clicked. It creates a new event and adds it to the pulse sequence."""
         # Create a QDialog for the new event
@@ -170,6 +152,22 @@ class PulseProgrammerView(ModuleView):
     @pyqtSlot()
     def on_events_changed(self) -> None:
         """This method is called whenever the events in the pulse sequence change. It updates the view to reflect the changes."""
+
+        pulse_parameter_options = (
+            self.module.model.pulse_sequence.pulse_parameter_options
+        )
+
+        logger.debug(
+            "Updating pulse parameter options to %s",
+            pulse_parameter_options.keys(),
+        )
+        # We set it to the length of the pulse parameter options + 1 because we want to add a row for the parameter option buttons
+        self.pulse_table.setRowCount(len(pulse_parameter_options) + 1)
+        # Move the vertical header labels on row down
+        pulse_options = [""]
+        pulse_options.extend(list(pulse_parameter_options.keys()))
+        self.pulse_table.setVerticalHeaderLabels(pulse_options)
+
         logger.debug("Updating events to %s", self.module.model.pulse_sequence.events)
 
         # Add label for the event lengths
@@ -198,10 +196,12 @@ class PulseProgrammerView(ModuleView):
 
     def set_parameter_icons(self) -> None:
         """This method sets the icons for the pulse parameter options."""
+        pulse_parrameter_options = (
+            self.module.model.pulse_sequence.pulse_parameter_options
+        )
+
         for column_idx, event in enumerate(self.module.model.pulse_sequence.events):
-            for row_idx, parameter in enumerate(
-                self.module.model.pulse_parameter_options.keys()
-            ):
+            for row_idx, parameter in enumerate(pulse_parrameter_options.keys()):
                 if row_idx == 0:
                     event_options_widget = EventOptionsWidget(event)
                     # Connect the delete_event signal to the on_delete_event slot
@@ -238,7 +238,8 @@ class PulseProgrammerView(ModuleView):
                 )
                 logger.debug("Parameter object id: %s", id(event.parameters[parameter]))
                 button = QPushButton()
-                icon = event.parameters[parameter].get_pixmap()
+
+                icon = VisualParameter(event.parameters[parameter]).get_pixmap()
                 logger.debug("Icon size: %s", icon.availableSizes())
                 button.setIcon(icon)
                 button.setIconSize(icon.availableSizes()[0])
@@ -290,11 +291,8 @@ class PulseProgrammerView(ModuleView):
                 else:
                     slider = False
 
-                if not slider:
-                    assert not option.slider, "Setting a slider is not possible without min and max values"
-
-                slider = option.slider
-
+                if slider:
+                    slider = option.slider
 
                 numeric_field = DuckFormFloatField(
                     option.name,
@@ -452,7 +450,7 @@ class EventOptionsWidget(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("Edit event")
         layout = QVBoxLayout()
-        label = QLabel(f"Edit event {self.event.name}")
+        label = QLabel(f"Edit event: {self.event.name}")
         layout.addWidget(label)
 
         # Create the inputs for event name, duration
@@ -460,15 +458,13 @@ class EventOptionsWidget(QWidget):
         name_label = QLabel("Name:")
         name_lineedit = QLineEdit(self.event.name)
         event_form_layout.addRow(name_label, name_lineedit)
-        duration_layout = QHBoxLayout()
-        duration_label = QLabel("Duration:")
+
+        duration_label = QLabel("Duration (µs):")
         duration_lineedit = QLineEdit()
-        unit_label = QLabel("µs")
+
         duration_lineedit.setText("%.16g" % (self.event.duration * 1e6))
-        duration_layout.addWidget(duration_label)
-        duration_layout.addWidget(duration_lineedit)
-        duration_layout.addWidget(unit_label)
-        event_form_layout.addRow(duration_layout)
+
+        event_form_layout.addRow(duration_label, duration_lineedit)
         layout.addLayout(event_form_layout)
 
         buttons = QDialogButtonBox(
@@ -543,21 +539,20 @@ class AddEventDialog(QDialog):
         self.name_input.validator = self.NameInputValidator(self)
 
         self.name_layout.addWidget(self.label)
+        self.name_layout.addStretch(1)
         self.name_layout.addWidget(self.name_input)
 
         self.layout.addRow(self.name_layout)
 
         self.duration_layout = QHBoxLayout()
 
-        self.duration_label = QLabel("Duration:")
+        self.duration_label = QLabel("Duration (µs):")
         self.duration_lineedit = DuckFloatEdit(min_value=0)
         self.duration_lineedit.setText("20")
-        self.unit_label = QLabel("µs")
 
         self.duration_layout.addWidget(self.duration_label)
+        self.duration_layout.addStretch(1)
         self.duration_layout.addWidget(self.duration_lineedit)
-
-        self.duration_layout.addWidget(self.unit_label)
 
         self.layout.addRow(self.duration_layout)
 
