@@ -6,7 +6,7 @@ import decimal
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.helpers.serializer import DecimalEncoder
 from nqrduck.module.module_controller import ModuleController
-from quackseq.pulsesequence import PulseSequence
+from quackseq.pulsesequence import QuackSequence
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +142,8 @@ class PulseProgrammerController(ModuleController):
 
         sequence = json.loads(sequence)
 
-        loaded_sequence = PulseSequence.load_sequence(
-            sequence, self.module.model.pulse_parameter_options
+        loaded_sequence = QuackSequence.load_sequence(
+            sequence
         )
 
         self.module.model.pulse_sequence = loaded_sequence
