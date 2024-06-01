@@ -1,1 +1,1 @@
-"""Empty file to make this directory a package."""
+"""The visual pulse programming module for quackseq in the NQRduck project."""
