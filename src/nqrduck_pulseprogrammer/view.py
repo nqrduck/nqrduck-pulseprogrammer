@@ -145,7 +145,7 @@ class PulseProgrammerView(ModuleView):
             event_name = dialog.get_name()
             duration = dialog.get_duration()
             logger.debug(
-                "Adding new event with name %s, duration %g", event_name, duration
+                "Adding new event with name %s, duration %s", event_name, duration
             )
             self.module.model.add_event(event_name, duration)
 
