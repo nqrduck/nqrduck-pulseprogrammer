@@ -1,6 +1,6 @@
-from nqrduck.assets.icons import PulseParamters
+from nqrduck.assets.icons import PulseParameters
 from quackseq.pulseparameters import TXPulse, RXReadout, PulseParameter
-from quackseq.functions import Function, RectFunction, SincFunction, GaussianFunction, CustomFunction
+from quackseq.functions import RectFunction, SincFunction, GaussianFunction
 
 class VisualParameter():
 
@@ -20,26 +20,26 @@ class VisualParameter():
                 # Get the shape
                 shape = self.pulse_parameter.get_option_by_name(TXPulse.TX_PULSE_SHAPE).value
                 if isinstance(shape, RectFunction):
-                    pixmap = PulseParamters.TXRect()
+                    pixmap = PulseParameters.TXRect()
                     return pixmap
                 elif isinstance(shape, SincFunction):
-                    pixmap = PulseParamters.TXSinc()
+                    pixmap = PulseParameters.TXSinc()
                     return pixmap
                 elif isinstance(shape, GaussianFunction):
-                    pixmap = PulseParamters.TXGauss()
+                    pixmap = PulseParameters.TXGauss()
                     return pixmap
                 else:
-                    pixmap = PulseParamters.TXCustom()
+                    pixmap = PulseParameters.TXCustom()
                     return pixmap
             else:
-                pixmap = PulseParamters.TXOff()
+                pixmap = PulseParameters.TXOff()
                 return pixmap
             
         elif isinstance(self.pulse_parameter, RXReadout):
             rx = self.pulse_parameter.get_option_by_name(RXReadout.RX).value
             if rx:
-                pixmap = PulseParamters.RXOn()
+                pixmap = PulseParameters.RXOn()
                 return pixmap
             else:
-                pixmap = PulseParamters.RXOff()
+                pixmap = PulseParameters.RXOff()
                 return pixmap
