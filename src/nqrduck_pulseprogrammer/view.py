@@ -26,12 +26,14 @@ from quackseq.pulseparameters import (
     BooleanOption,
     NumericOption,
     FunctionOption,
+    TableOption,
 )
 from nqrduck.helpers.formbuilder import (
     DuckFormBuilder,
     DuckFormFunctionSelectionField,
     DuckFormCheckboxField,
     DuckFormFloatField,
+    DuckTableField,
 )
 
 from .visual_parameter import VisualParameter
@@ -271,6 +273,9 @@ class PulseProgrammerView(ModuleView):
             parameter (str): The name of the parameter for which the options should be set.
         """
         logger.debug("Button for event %s and parameter %s clicked", event, parameter)
+        # We assume the pulse sequence was updated
+        self.module.model.pulse_sequence.update_options()
+
         # Create a QDialog to set the options for the parameter.
         description = f"Set options for {parameter}"
         dialog = DuckFormBuilder(parameter, description=description, parent=self)
@@ -278,53 +283,33 @@ class PulseProgrammerView(ModuleView):
         # Adding fields for the options
         form_options = []
         for option in event.parameters[parameter].options:
-            if isinstance(option, BooleanOption):
-                boolean_form = DuckFormCheckboxField(
-                    option.name, tooltip=None, default=option.value
-                )
-                dialog.add_field(boolean_form)
-                form_options.append(option)
-            elif isinstance(option, NumericOption):
-                # We only show the slider if both min and max values are set
-                if option.min_value is not None and option.max_value is not None:
-                    slider = True
-                else:
-                    slider = False
+            logger.debug(f"Option value is {option.value}")
+            if isinstance(option, TableOption):
+                # Every option is it's own column. Every column has a dedicated number of rows.
+                # Get the option name:
+                name = option.name
+                table = DuckTableField(name, tooltip=None)
 
-                if slider:
-                    slider = option.slider
+                columns = option.columns
 
-                numeric_field = DuckFormFloatField(
-                    option.name,
-                    tooltip=None,
-                    default=option.value,
-                    min_value=option.min_value,
-                    max_value=option.max_value,
-                    slider=slider,
-                )
+                for column in columns:
+                    # Every table option has a number of rows
+                    fields = []
+                    for row in column.options:
+                        fields.append(self.get_field_for_option(row, event))
 
-                dialog.add_field(numeric_field)
-                form_options.append(option)
-            elif isinstance(option, FunctionOption):
-                logger.debug(f"Functions: {option.functions}")
+                    name = column.name
 
-                # When loading a pulse sequence, the instance of the objects will be different
-                # Therefore we need to operate on the classes
-                for function in option.functions:
-                    if function.__class__.__name__ == option.value.__class__.__name__:
-                        default_function = function
+                    logger.debug(f"Adding column {name} with fields {fields}")
+                    table.add_column(option=column, fields=fields)
 
-                index = option.functions.index(default_function)
+                form_options.append(table)
+                dialog.add_field(table)
 
-                function_field = DuckFormFunctionSelectionField(
-                    option.name,
-                    tooltip=None,
-                    functions=option.functions,
-                    duration=event.duration,
-                    default_function=index,
-                )
-                dialog.add_field(function_field)
-                form_options.append(option)
+            else:
+                field = self.get_field_for_option(option, event)
+                form_options.append(field)
+                dialog.add_field(field)
 
         result = dialog.exec()
 
@@ -333,9 +318,66 @@ class PulseProgrammerView(ModuleView):
         if result:
             values = dialog.get_values()
             for i, value in enumerate(values):
-                options[i].value = value
+                logger.debug(f"Setting value {value} for option {options[i]}")
+                options[i].set_value(value)
 
             self.set_parameter_icons()
+
+    def get_field_for_option(self, option, event):
+        """Returns the field for the given option.
+
+        Args:
+            option (Option): The option for which the field should be created.
+            event (PulseSequence.Event): The event for which the option should be created.
+
+        Returns:
+            DuckFormField: The field for the option
+        """
+        logger.debug(f"Creating field with value {option.value}")
+        if isinstance(option, BooleanOption):
+            field = DuckFormCheckboxField(
+                option.name, tooltip=None, default=option.value
+            )
+        elif isinstance(option, NumericOption):
+            # We only show the slider if both min and max values are set
+            if option.min_value is not None and option.max_value is not None:
+                slider = True
+            else:
+                slider = False
+
+            if slider:
+                slider = option.slider
+
+            field = DuckFormFloatField(
+                option.name,
+                tooltip=None,
+                default=option.value,
+                min_value=option.min_value,
+                max_value=option.max_value,
+                slider=slider,
+            )
+
+        elif isinstance(option, FunctionOption):
+            logger.debug(f"Functions: {option.functions}")
+
+            # When loading a pulse sequence, the instance of the objects will be different
+            # Therefore we need to operate on the classes
+            for function in option.functions:
+                if function.__class__.__name__ == option.value.__class__.__name__:
+                    default_function = function
+
+            index = option.functions.index(default_function)
+
+            field = DuckFormFunctionSelectionField(
+                option.name,
+                tooltip=None,
+                functions=option.functions,
+                duration=event.duration,
+                default_function=index,
+            )
+
+        logger.debug(f"Returning Field: {field}")
+        return field
 
     @pyqtSlot()
     def on_save_button_clicked(self) -> None:
