@@ -48,8 +48,8 @@ convention = "google"
 
 [project.urls]
 "Homepage" = "https://nqrduck.cool"
-"Bug Tracker" = "https://github.com/nqrduck/nqrduck-pulseprogrammer/issues"
-"Source Code" = "https://github.com/nqrduck/nqrduck-pulseprogrammer"
+"Bug Tracker" = "https://git.private.coffee/nqrduck/nqrduck-pulseprogrammer/issues"
+"Source Code" = "https://git.private.coffee/nqrduck/nqrduck-pulseprogrammer"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nqrduck_pulseprogrammer"]
