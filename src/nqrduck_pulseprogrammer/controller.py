@@ -6,7 +6,7 @@ import decimal
 from PyQt6.QtCore import pyqtSlot
 from nqrduck.helpers.serializer import DecimalEncoder
 from nqrduck.module.module_controller import ModuleController
-from nqrduck_spectrometer.pulsesequence import PulseSequence
+from quackseq.pulsesequence import QuackSequence
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +17,9 @@ class PulseProgrammerController(ModuleController):
     This class is responsible for handling the logic of the pulse programmer module.
     """
 
-    def on_loading(self, pulse_parameter_options: dict) -> None:
-        """This method is called when the module is loaded. It sets the pulse parameter options in the model.
-
-        Args:
-            pulse_parameter_options (dict): The pulse parameter options.
-        """
+    def on_loading(self) -> None:
+        """This method is called when the module is loaded. It sets the pulse parameter options in the model."""
         logger.debug("Pulse programmer controller on loading")
-        self.module.model.pulse_parameter_options = pulse_parameter_options
 
     @pyqtSlot(str)
     def delete_event(self, event_name: str) -> None:
@@ -34,10 +29,7 @@ class PulseProgrammerController(ModuleController):
             event_name (str): The name of the event to be deleted.
         """
         logger.debug("Deleting event %s", event_name)
-        for event in self.module.model.pulse_sequence.events:
-            if event.name == event_name:
-                self.module.model.pulse_sequence.events.remove(event)
-                break
+        self.module.model.pulse_sequence.delete_event(event_name)
         self.module.model.events_changed.emit()
 
     @pyqtSlot(str, str)
@@ -150,8 +142,8 @@ class PulseProgrammerController(ModuleController):
 
         sequence = json.loads(sequence)
 
-        loaded_sequence = PulseSequence.load_sequence(
-            sequence, self.module.model.pulse_parameter_options
+        loaded_sequence = QuackSequence.load_sequence(
+            sequence
         )
 
         self.module.model.pulse_sequence = loaded_sequence
